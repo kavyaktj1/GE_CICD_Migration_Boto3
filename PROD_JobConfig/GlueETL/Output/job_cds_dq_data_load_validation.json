@@ -1,0 +1,34 @@
+{
+    "Name": "job_cds_dq_data_load_validation",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-05-29 13:38:00.328000+00:00",
+    "LastModifiedOn": "2020-05-29 15:53:36.817000+00:00",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "pythonshell",
+        "ScriptLocation": "s3://odp-us-innovation-servicesuite/common/502818085-CICD/ODP_DEV/ODP/Common/src/glue/DQ_Framework/job_cds_dq_data_load_validation.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--aws_secret": "redshift_secrets",
+        "--bucket_name": "odp-us-prod-raw",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/lib/pypi/SQLAlchemy-1.3.17-cp36-cp36m-manylinux2010_x86_64.whl,s3://odp-us-prod-raw/servicesuite/ODP/lib/pypi/pg8000-1.15.2-py3-none-any.whl",
+        "--job-bookmark-option": "job-bookmark-disable",
+        "--job-language": "python",
+        "--key": "servicesuite/ODP/Common/src/glue/DQ_Framework/Input_File_Update_ib_intel.csv",
+        "--region": "us-east-1",
+        "--aws_secret ": "us-prod-odp-entity-cds-fsso"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 0,
+    "Timeout": 2880,
+    "MaxCapacity": 0.0625,
+    "GlueVersion": "1.0"
+}

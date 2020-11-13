@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+	parameters {
+		string(description: '', name:'Repo_Name', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Clone ODP_Product repository') {
+			steps {
+				script{
+				try {
+					git branch: 'ODP_DEV',
+					credentialsId: 'git',
+					url: 'git@github.build.ge.com:DnA-ODP/${Repo_Name}.git'
+				}
+				catch (err) {
+				}
+				}
+			}
+		}
+		stage('Create Git Commit Log File'){
+			steps {
+				script {
+				try {
+					sh 'cd ODP/JobConfig'
+					sh 'git log --stat --name-status > git_commit_info.txt'
+				}
+				catch (err) {
+				}
+				}
+			}
+		}
+    }
+}

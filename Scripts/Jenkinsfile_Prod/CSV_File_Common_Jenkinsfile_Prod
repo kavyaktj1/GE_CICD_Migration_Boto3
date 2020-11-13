@@ -1,0 +1,54 @@
+def flag = ""
+
+pipeline {
+    agent any
+	
+	parameters {
+        string(description: '', name:'PR_ID', defaultValue: "-1")
+		string(description: '', name:'Workspace_Path', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+		stage('Build CSV Files for Migration'){
+			steps{
+				script{
+					try {
+					sshagent (credentials: ['git']){
+						flag = sh(script:'python3 Scripts/csv_file_creation_common_prod.py "${PR_ID}" "${Workspace_Path}"', returnStdout: true).trim()
+						echo "${flag}"
+						sh """
+							cd Scripts
+							python3 create_csv.py
+							rm -rf job_list.csv
+							git pull origin HEAD:master
+							git add -A :/
+							git commit -m "Creating/Updating Jobs in PROD Environment"
+							git push origin HEAD:master
+						"""
+					}
+					}
+					catch (err) {
+						if (flag=="False"){
+							error "Files in PR has invalid extension files. Please check. PR is aborted"
+						}
+					}
+				}
+			}
+		}
+		
+	}
+	post{
+		always
+		{
+			script{
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				sh 'python3 Scripts/publish_cw_logs.py "CSV-File-Creation" "${PR_ID}"'
+			}
+		}
+	}
+}

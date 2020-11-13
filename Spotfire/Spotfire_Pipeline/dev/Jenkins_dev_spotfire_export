@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+		stage('Export Spotfire Reports'){
+			steps {
+				script { 
+					sshagent(credentials: ['spotfire-key']) {
+						sh 'scp  Spotfire/Scripts/Export/SP_AUTO_Export_Version1.sh lg820442sv@10.242.113.5:/home/lg820442sv/'
+						sh 'scp  Spotfire/Scripts/Export/spotfire_export_dev_to_s3.sh lg820442sv@10.242.113.5:/home/lg820442sv/'
+						sh 'scp  Spotfire/Scripts/Export/spotfire_backup_data.csv lg820442sv@10.242.113.5:/data/impex_data/AUTOMATION/spotfire_data.csv'
+						sh 'scp  Spotfire/Scripts/Export/old_pass.txt lg820442sv@10.242.113.5:/data/impex_data/AUTOMATION/old_pass.txt'
+						sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo chmod +x /home/lg820442sv/SP_AUTO_Export_Version1.sh;sudo chmod +x /home/lg820442sv/spotfire_export_dev_to_s3.sh"'
+						sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo ./SP_AUTO_Export_Version1.sh"'
+						sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "ls -lR /data/impex_data/Migration_Automation/spotfire_data/"'
+					}
+				}
+			}
+		}
+		stage('Copy to S3'){
+			steps{
+				script{
+					sshagent(credentials: ['spotfire-key']) {
+						sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo sed -i -e \'s/\r$//\' spotfire_export_dev_to_s3.sh;/home/lg820442sv/spotfire_export_dev_to_s3.sh"'
+						sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "aws s3 ls s3://odp-us-innovation-spotfire/CICD-502820442/spotfire/dev/"'
+					}
+				}
+			}
+		}
+	}
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

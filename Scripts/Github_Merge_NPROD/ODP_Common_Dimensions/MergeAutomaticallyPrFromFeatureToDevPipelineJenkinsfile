@@ -1,0 +1,158 @@
+def pr_status=''
+def v_PR=''
+def v_Mail1=''
+
+pipeline {
+
+    agent any
+	
+    environment {
+	v_STATUS=''
+	}
+	options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '30'))
+    }
+     stages {
+         
+       stage('Login into Github') {
+		steps {
+			
+			catchError {
+
+				sshagent (credentials: ['git']) {
+							script {
+							    
+								pr_status=sh(script:'v_pr_and_status=`sh Scripts/Github_Merge_NPROD/ODP_Common_Dimensions/CallFeatureToDevMergePython.sh`;echo $v_pr_and_status',returnStdout:true).trim()
+								//sh 'python3 Scripts/AutoMergePrFromFeatureToDev.py'
+								echo "pr_status: ${pr_status}"
+								//v_PR = pr_status.split("\\|")[0]
+								def (PR_ID_MERGE, STATUS, EMAIL1, COMMIT_REVERT) = pr_status.tokenize( '|' )
+								echo "PR_ID : $PR_ID_MERGE"
+								echo "STATUS : $STATUS"
+								echo "EMAIL1 : $EMAIL1"
+								v_PR = sh(script:"echo ${PR_ID_MERGE}", returnStdout:true).trim()
+								v_Mail1 = sh(script:"echo ${EMAIL1}", returnStdout:true).trim()
+								echo "${v_PR}"
+							    echo "${v_Mail1}"   
+								v_Revert_Commit=sh(script:"echo ${COMMIT_REVERT}", returnStdout:true).trim()
+								echo "COMMIT_REVERT : $COMMIT_REVERT"								
+							
+							}
+				
+				}
+			}
+		}
+	}
+	 
+	 
+	stage ('Doing revert Of ODP_DEV') {
+                when {
+                    expression { pr_status =~ /mergeconflictrelease/ }
+                }
+                steps {
+		sshagent (credentials: ['git']) {
+                   script {
+				   
+				   
+				            echo "Cloning the ODP_Repo after mergeconflict of Dev to Release"
+                            sh 'pwd'
+                   			sh 'ls -la'
+							sh 'rm -rf tempdir_odp;mkdir tempdir_odp'
+							echo "Current workspace is ${env.WORKSPACE}"
+							dir('tempdir_odp'){
+								git branch: 'ODP_DEV',
+								credentialsId: 'git',
+								url: 'git@github.build.ge.com:DnA-ODP/ODP_Common_Dimensions.git'
+								
+								}
+                             sh """
+                                echo ${v_Revert_Commit}
+                                echo "${v_Revert_Commit}"
+                                pwd
+								rm -rf myVariable.txt
+								git checkout ODP_DEV
+								git pull origin ODP_DEV
+								git log --oneline|head -n 10
+								git revert --no-commit ${v_Revert_Commit} -n HEAD
+								echo "logging"
+								echo "pushing"
+								git add -A :/
+								git commit -m "Added Revert for Conflicting PR"
+								git log --oneline|head -n 10
+                                git push origin ODP_DEV
+                                """
+                             
+            
+                    } 
+                }
+		}
+    }
+            
+            stage ('Sending mergeconflict Email') {
+                when {
+                    expression { pr_status =~ /mergeconflictdev/ }
+                }
+                steps {
+                   script {
+            	    emailID = "${v_Mail1}"+"@ge.com"
+		    emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "[Deployment Status:] MergeConflict for Track - Common Dimensions from Feature to DEV ${v_PR}",
+                    to: "<${emailID}>,<Health_ODP_CICD_Dev_Team@ge.com>",
+                    body: "ODP Common Dimensions Merge Status for PR ID : ${v_PR} <br /> Merge Conflict from Feature to DEV for the above PR<br />"
+            
+                    } 
+                }
+            }
+            
+
+			
+			stage ('Sending mergeconflict  for Release Email') {
+                when {
+                    expression { pr_status =~ /mergeconflictrelease/ }
+                }
+                steps {
+                   script {
+            snsPublish(topicArn:'arn:aws:sns:us-east-1:341594139623:us-odp-prod-devops-assembly-line-failure', subject:"Merge Conflict from Feature to NPROD for Track - CD for PR ID : ${v_PR}", message:"Please check the PR :${v_PR}  going to be merged to NPROD")
+					sh 'echo "MergeConflict Release mail"'
+                    } 
+                }
+            }
+			
+			stage ('Sending Success Email') {
+                when {
+                    expression { pr_status =~ /success/ }
+                }
+                steps {
+                   script {
+            
+            snsPublish(topicArn:'arn:aws:sns:us-east-1:341594139623:us-odp-prod-devops-assembly-line-success', subject:"Successfully Merged PR ID : ${v_PR} for Track - CD to ODP_NPROD branch",message:"Successfuly Merged PR ID : ${v_PR} to NPROD branch and started the NPROD-Assembly-Line.")
+					sh 'echo "Success Email"'
+					build job: 'ODP-NPROD_Github_Merge_To_NPROD_CD', parameters: [[$class: 'StringParameterValue',name: 'PR_ID', value: "${v_PR}"]]
+					build "ODP-NPROD-S3_Code_Deploy_CD"
+                    } 
+                }
+            }
+	    
+	  stage('Executing NPROD Assembly Line') {
+	  	
+		when { 
+			
+			expression { pr_status =~ /success/  } 
+		}
+		steps {
+			script {
+				
+					 build job: 'ODP-NPROD-Common-Assembly-Line', parameters: [[$class: 'StringParameterValue',name: 'Repo_Name', value: "ODP_Common_Dimensions"],[$class: 'StringParameterValue',name: 'PR_ID', value: "${v_PR}"],[$class: 'StringParameterValue',name: 'SSO_ID', value: "${v_Mail1}"]]
+				
+				
+			}
+		}
+	}
+	
+  }
+  
+}  
+	

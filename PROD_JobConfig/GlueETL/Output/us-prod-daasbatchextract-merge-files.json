@@ -1,0 +1,44 @@
+{
+    "Name": "us-prod-daasbatchextract-merge-files",
+    "Role": "arn:aws:iam::245792935030:role/odp-us-prod-daasbatchextract-service-role",
+    "CreatedOn": "2020-08-10 15:50:25.385000+05:30",
+    "LastModifiedOn": "2020-08-19 23:31:10.276000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 100
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Daas_Batch_Extract_Framework/src/glue/us-prod-daasbatchextract-merge-file.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--application_name": "app_name",
+        "--dynamo_input_table": "us-prod-daasbatchextract-config",
+        "--enable-continuous-cloudwatch-log": "true",
+        "--enable-metrics": "",
+        "--extract_number": "extract_no",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--region_name": "us-east-1",
+        "--sns_app_failure_topic_name": "sns_app_failure_topic_name",
+        "--sns_app_success_topic_name": "sns_app_success_topic_name",
+        "--sns_failure_topic_name": "us-odp-innovation-daas-batch-extract-success",
+        "--sns_success_topic_name": "us-odp-innovation-daas-batch-extract-success",
+        "--bucket_name": "odp-us-prod-raw",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Audit/Audit.zip",
+        "--envprefix": "us-prod-odp"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 2,
+    "Timeout": 2880,
+    "MaxCapacity": 2.0,
+    "WorkerType": "Standard",
+    "NumberOfWorkers": 2,
+    "GlueVersion": "2.0"
+}

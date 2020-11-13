@@ -1,0 +1,47 @@
+{
+    "Name": "job_lnd_mrr_full_refresh_gla_srv_cos_psi_cd_lst_d",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-08-28 15:16:37.348000+05:30",
+    "LastModifiedOn": "2020-08-28 15:16:37.348000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Compaction/job_lnd_mrr_full_refresh.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--arn_acc_no": "245792935030",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable-spark-ui": "true",
+        "--enable_audit": "True",
+        "--envprefix": "us-prod-odp",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Audit/Audit.zip",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_gla",
+        "--mrr_table_name": "srv_cos_psi_cd_lst_d",
+        "--raw_db": "db_lnd_gla",
+        "--raw_table_name": "srv_cos_psi_cd_lst_d",
+        "--region": "us-east-1",
+        "--spark-event-logs-path": "s3://odp-us-innovation-servicesuite/spark-event-logs",
+        "--src_system": "gla"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 10,
+    "Timeout": 2880,
+    "MaxCapacity": 10.0,
+    "WorkerType": "Standard",
+    "NumberOfWorkers": 10,
+    "GlueVersion": "2.0"
+}

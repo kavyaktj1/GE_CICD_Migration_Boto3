@@ -1,0 +1,1 @@
+{"PROD_ODP_SF_NOTIFY": "arn:aws:sns:us-east-1:245792935030:PROD_ODP_SF_NOTIFY", "Subscriptions": [{"SubscriptionArn": "arn:aws:sns:us-east-1:245792935030:PROD_ODP_SF_NOTIFY:c009625b-2691-4532-b666-88bfb3683c7b", "Owner": "245792935030", "Protocol": "email", "Endpoint": "Health_ODP_CD_Team@ge.com", "TopicArn": "arn:aws:sns:us-east-1:245792935030:PROD_ODP_SF_NOTIFY"}]}

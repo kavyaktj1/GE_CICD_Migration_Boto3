@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS Crawler Run") {
+          steps {
+                  sh """
+					cd Scripts/Crawler
+                    python3 crawler_metadata_qa.py
+                    python3 crawler_qa_create.py
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

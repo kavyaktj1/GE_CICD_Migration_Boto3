@@ -1,0 +1,12 @@
+node {
+	git branch: 'master',
+		credentialsId: 'Git-Cred',
+		url: 'https://github.build.ge.com/DnA-ODP/CICD_Migration_Boto3.git'
+    step([
+        $class: 'ExecuteDslScripts',
+        targets: ['EaC_NPROD_Components.groovy'].join('\n'),
+        removedJobAction: 'IGNORE',
+        removedViewAction: 'IGNORE',
+        lookupStrategy: 'JENKINS_ROOT'
+    ])
+}

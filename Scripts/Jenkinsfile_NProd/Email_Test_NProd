@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+    
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+		stage('Sending Email'){
+			steps {
+				script {
+					emailext mimeType: 'text/html',
+          from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+          subject: "[Deployment Status: SUCCESS] ODP NProd Service Function Assembly Line",
+          to: "<ayush.arora@ge.com>",
+          body: "ODP NPROD Deployment Status for PR ID"
+					echo "Sending Email"
+				}
+			}
+		}
+    }    
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

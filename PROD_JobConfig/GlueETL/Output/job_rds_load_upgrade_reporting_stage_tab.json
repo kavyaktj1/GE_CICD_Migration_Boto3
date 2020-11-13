@@ -1,0 +1,31 @@
+{
+    "Name": "job_rds_load_upgrade_reporting_stage_tab",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-06-12 18:57:08.248000+05:30",
+    "LastModifiedOn": "2020-06-17 17:13:04.363000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "pythonshell",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/IB_Upgrade/src/glue/job_rds_load_upgrade_reporting_stage_tab.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--aws_secret": "rds_rulestudio_secrets",
+        "--job-bookmark-option": "job-bookmark-disable",
+        "--job-language": "python",
+        "--region_name": "us-east-1",
+        "--aws_secret ": "us-prod-odp-entity-cds-fsso"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 0,
+    "Timeout": 2880,
+    "MaxCapacity": 0.0625,
+    "GlueVersion": "1.0"
+}

@@ -1,0 +1,31 @@
+{
+    "Name": "job_mrr_otl_rs_proc_entity",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-05-22 12:44:13.844000+05:30",
+    "LastModifiedOn": "2020-05-24 14:12:59.684000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "pythonshell",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Compaction/job_mrr_otl_rs_proc_entity.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--aws_secret": "us-dev-odp-entity-cds-fsso",
+        "--job-bookmark-option": "job-bookmark-disable",
+        "--job-language": "python",
+        "--region": "us-east-1",
+        "--rs_proc_name": "hdl_services_sp.sp_prd_main_rel_as_sbom()"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 0,
+    "Timeout": 2880,
+    "MaxCapacity": 0.0625,
+    "GlueVersion": "1.0"
+}

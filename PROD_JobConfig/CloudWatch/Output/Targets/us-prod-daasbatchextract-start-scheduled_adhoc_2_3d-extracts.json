@@ -1,0 +1,1 @@
+[{"Id": "Id34006244451", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:us-prod-daasbatchextract-adhoc_scheduled_2-extract", "RoleArn": "arn:aws:iam::245792935030:role/odp-us-prod-daasbatchextract-service-role", "Input": "{ \"INPUT\": {\"100043704_monthly\": \"Y\", \"100043704_three_days\": \"N\"}}"}]

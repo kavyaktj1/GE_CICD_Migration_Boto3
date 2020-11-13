@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+	parameters {
+        string(description: '', name:'Workspace_Path', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS DynamoDB Run") {
+          steps {
+                  sh """
+					cd Scripts/DynamoDB
+                    python3 dynamo_config_migration.py "${Workspace_Path}"
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

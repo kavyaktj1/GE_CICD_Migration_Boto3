@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+	parameters {
+        string(description: '', name:'Workspace_Path', defaultValue: "")
+		string(description: '', name:'PR_ID', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS CloudWatch Run") {
+          steps {
+                  sh """
+					cd Scripts/CloudWatch
+                    python3 cloudwatch_metadata_NPROD.py "${Workspace_Path}"
+					python3 cloudwatch_create_NPROD.py "${Workspace_Path}"
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always
+		{
+			script{
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				sh 'python3 Scripts/CloudwatchLogs/publish_cw_logs_NPROD.py "AWS-Cloudwatch" "${PR_ID}"'
+			}
+		}
+    }
+}

@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+    
+	parameters {
+        string(description: '', name:'PR_ID', defaultValue: "-1")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Clone ODP_Product repository') {
+			steps {
+				sh 'rm tempdir_odp -rf; mkdir tempdir_odp'
+				dir('tempdir_odp'){
+					git branch: 'ODP_DEV',
+					credentialsId: 'git',
+					url: 'git@github.build.ge.com:DnA-ODP/ODP_Product.git'
+				}
+			}
+		}
+	
+	stage('AWS DynamoDB QA Migration') {
+		steps {
+			catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+				build job: 'Migrate_DynamoDB', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}")]
+			}
+		}
+	}
+    }    
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

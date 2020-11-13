@@ -1,0 +1,1 @@
+[{"Id": "Id769550936024", "Arn": "arn:aws:states:us-east-1:541574621075:stateMachine:PQW_COMPACTION", "RoleArn": "arn:aws:iam::541574621075:role/odp-us-innovation-servicesuite-service-role", "Input": "{\"INPUT\": {\"RAW_CRAWLER\": \"N\",\"IB_INTEL_COMPACTION_PQW\": \"Y\",\"MIRROR_CRAWLER\": \"N\",\"PUT_LAMBDA\": \"N\",\"RS_COPY_INSERT\": \"Y\"}}"}]

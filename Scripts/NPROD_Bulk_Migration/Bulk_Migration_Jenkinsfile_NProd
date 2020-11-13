@@ -1,0 +1,99 @@
+pipeline {
+    agent any
+	
+	parameters {
+        string(description: '', name:'ServiceName', defaultValue: "GlueETL")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+		stage('Building Manifest Files'){
+			steps{
+				script{
+					try {
+						sshagent (credentials: ['git']){
+							sh """
+							python3 Scripts/NPROD_Bulk_Migration/manifest_creation.py "${env.WORKSPACE}" "${ServiceName}"
+							cd Scripts
+							python3 create_csv_nprod.py
+							"""
+						}
+					}
+					catch (err) {
+						
+					}
+				}
+			}
+		}
+		stage('Migrating Bulk Components'){
+			steps{
+				script{
+					try{
+						if(ServiceName=="GlueETL"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 glue_metadata_NPROD.py "${env.WORKSPACE}"
+							python3 glue_create_update_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+						else if(ServiceName=="Classifier"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 glue_classifier_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+						else if(ServiceName=="Crawler"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 crawler_metadata_NPROD.py "${env.WORKSPACE}"
+							python3 crawler_create_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+						else if(ServiceName=="CloudWatch"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 cloudwatch_metadata_NPROD.py "${env.WORKSPACE}"
+							python3 cloudwatch_create_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+						else if(ServiceName=="Lambda"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 layer_create_dev_NPROD.py "${env.WORKSPACE}"
+							python3 lambda_create_zip_NPROD.py "${env.WORKSPACE}"
+							python3 lambda_create_update_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+						else if(ServiceName=="LambdaLayer"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 layer_create_dev_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+						else if(ServiceName=="SNS"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 sns_create_update_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+						else if(ServiceName=="StepFunction"){
+							sh """
+							cd Scripts/NPROD_Bulk_Migration
+							python3 sfn_activity_NPROD.py
+							python3 sfn_NPROD.py "${env.WORKSPACE}"
+							"""
+						}
+					}
+					catch(err){
+					
+					}
+				}
+			}
+		}
+		
+	}
+}

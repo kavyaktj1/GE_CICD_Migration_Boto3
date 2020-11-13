@@ -1,0 +1,258 @@
+def v_trigger_status=""
+//def exists = fileExists 'trigger_jenkins_prod_import'
+def v_execute_stage=""
+def failedStages = ""
+def finalmsg = ""
+def buildresult = ""
+def emailID = ""
+def errorlog = ""
+def errorprefix = ""
+def list_error_log = ""
+def failedstagesHTML = ""
+def v_error_occured=""
+pipeline {
+    agent any
+
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+			stage('Checking for trigger_jenkins_dev_import.txt file'){
+			steps {
+				script {
+				try {
+					//sh 'cat Spotfire/backward_migration/trigger_file_dir/trigger_jenkins_dev_import.txt'
+					//v_trigger_status=sh(script:'v_copy_status=`test -f Spotfire/backward_migration/trigger_file_dir/trigger_jenkins_dev_import.txt;echo $?`;echo $v_copy_status',returnStdout:true).trim()
+					 v_trigger_status=sh (script:"ls Spotfire/backward_migration/trigger_file_dir/trigger_jenkins_dev_import.txt",returnStatus:true)
+					echo "v_trigger_status:${v_trigger_status}"
+					
+					if ( v_trigger_status == 0){
+						v_execute_stage="yes"
+						def data = readFile(file: 'Spotfire/backward_migration/trigger_file_dir/trigger_jenkins_dev_import.txt')
+						echo "data:${data}"
+						def (USER_STORY,EMAIL1) = data.tokenize( '|' )
+						echo "USER_STORY : $USER_STORY"
+						echo "EMAIL1 : $EMAIL1"
+						v_USER_STORY = sh(script:"echo ${USER_STORY}", returnStdout:true).trim()
+						SSO_ID = sh(script:"echo ${EMAIL1}", returnStdout:true).trim()
+						echo "USER_STORY:${v_USER_STORY}"
+						echo "SSO_ID:${SSO_ID}"
+					}else { 
+						v_execute_stage="no"
+					}
+						/*
+						if (fileExists ('./trigger_jenkins_prod_import')) {
+							v_execute_stage="yes"
+							echo "v_execute_stage: ${v_execute_stage}"
+						} else {
+							echo "File /var/lib/jenkins/workspace/Jenkins_Spotfire_Export_Dev_Clone/trigger_jenkins_prod_import doesn't exist"
+
+						}
+						*/
+						
+						//sh 'test -f trigger_jenkins_prod_import_2;echo $?'
+						
+				}
+				catch (err) {
+					echo "There was error while checking for the trigger file"
+					v_error_occured='yes'
+				}
+				}
+			}
+		}
+		stage('Backup to S3'){
+			when {
+				expression { v_error_occured != /yes/ && v_execute_stage=="yes"  }
+			}
+			steps {
+				script { 
+					try {
+						echo "Backup to S3 stage"
+						
+						sshagent(credentials: ['spotfire-key']) {
+							sh 'ls  Spotfire/backward_migration/Backup/SP_AUTO_Prd_Bckp_HC_SVC_v1.sh'
+							sh 'scp  Spotfire/backward_migration/Backup/SP_AUTO_Prd_Bckp_HC_SVC_v1.sh lg820442sv@10.242.113.5:/home/lg820442sv/'
+							sh 'ls  Spotfire/backward_migration/Backup/spotfire_dev_backup_to_s3.sh'
+							sh 'scp  Spotfire/backward_migration/Backup/spotfire_dev_backup_to_s3.sh lg820442sv@10.242.113.5:/home/lg820442sv/'
+							sh 'scp  Spotfire/backward_migration/Backup/spotfire_backup_data.csv lg820442sv@10.242.113.5:/data/impex_data/Migration_Automation/spotfire_backup_data.csv'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo chmod +x /home/lg820442sv/SP_AUTO_Prd_Bckp_HC_SVC_v1.sh;sudo chmod +x /home/lg820442sv/spotfire_dev_backup_to_s3.sh;sudo sed -i -e \'s/\r$//\' spotfire_dev_backup_to_s3.sh;sudo sed -i -e \'s/\r$//\' /home/lg820442sv/SP_AUTO_Prd_Bckp_HC_SVC_v1.sh"'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo ./SP_AUTO_Prd_Bckp_HC_SVC_v1.sh"'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "ls -lR /data/impex_data/Migration_Automation/backup/"'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "/home/lg820442sv/spotfire_dev_backup_to_s3.sh"'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "aws s3 ls s3://odp-us-innovation-spotfire/CICD-dev/backup/"'
+						}
+						
+					}
+					catch (err) {
+						echo "Error in Backup to S3 stage"
+						v_error_occured='yes'
+					}
+				}
+			}
+		}
+		stage('Copy to EC2'){
+			when {
+				expression {  v_error_occured != /yes/ && v_execute_stage=="yes"   }
+			}
+			steps {
+				script { 
+					try {
+						echo "Copy to EC2 stage"
+						
+						sshagent(credentials: ['spotfire-key']) {
+							sh 'ls Spotfire/backward_migration/Import/spotfire_import_s3_to_dev.sh'
+							sh 'scp  Spotfire/backward_migration/Import/spotfire_import_s3_to_dev.sh lg820442sv@10.242.113.5:/home/lg820442sv/'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo chmod +x /home/lg820442sv/spotfire_import_s3_to_dev1.sh; sudo sed -i -e \'s/\r$//\' spotfire_import_s3_to_dev.sh"'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "/home/lg820442sv/spotfire_import_s3_to_dev.sh"'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "ls -lR /data/impex_data/Migration_Automation/Imports/"'
+						}
+						
+					}
+					catch (err) {
+						echo "Error in Copy to EC2 stage"
+						v_error_occured='yes'
+					}
+					
+				}
+			}
+		}
+		stage('Execute Import'){
+			when {
+				expression {  v_error_occured != /yes/ && v_execute_stage=="yes"  }
+			}
+			steps{
+				script{
+					try {
+						echo "Execute Import stage"
+						
+						sshagent(credentials: ['spotfire-key']) {
+							sh 'ls  Spotfire/backward_migration/Import/SP_AUTO_Import_HC_SVC_V1.sh'
+							sh 'scp  Spotfire/backward_migration/Import/SP_AUTO_Import_HC_SVC_V1.sh lg820442sv@10.242.113.5:/home/lg820442sv/'
+							sh 'scp  Spotfire/backward_migration/Export/spotfire_data.csv lg820442sv@10.242.113.5:/data/impex_data/Migration_Automation/BCKPCSV/spotfire_data.csv'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo chmod +x /home/lg820442sv/SP_AUTO_Import_HC_SVC_V1.sh"'
+							sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.113.5 "sudo ./SP_AUTO_Import_HC_SVC_V1.sh"'
+						}
+						
+					}
+					catch (err) {
+						echo "Error in Execute Import stage"
+						v_error_occured='yes'
+					}
+				}
+			}
+		}
+		/*
+		stage ('Sending Logs To CloudWatch') {
+														   
+			 
+			steps {
+				
+				script{
+				try {
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				//sh 'python3 Spotfire/Scripts/publish_cw_logs.py  ""'
+				sh "python3 Spotfire/Scripts/Spotfire_publish_cw_logs_prod.py ${v_USER_STORY}"
+			}
+			
+			catch (err) {
+			  echo "Error while Publishing the log"
+				}
+				}
+			}
+		}
+		*/
+		
+		stage ('Checking if any Error happended'){
+			when {
+                    expression { v_error_occured =~ /yes/ }
+            }
+			steps {
+				script {
+						 errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nError While Doing Import to Dev :- \n"+sh(script:'python3 Spotfire/common/Spotfire_getting_error_logs.py ', returnStdout: true).trim()
+				}
+			}
+		}
+		stage('Deleting the trigger file ') {
+			when {
+                    expression {  v_error_occured != /yes/ && v_execute_stage=="yes"  }
+            }
+			steps {
+				script {
+					try {
+						sshagent (credentials: ['git']) {
+									sh 'echo "Deleting the Trigger file stage and  spotfire_data file"'
+									//sh 'git add -A'
+									//sh 'git commit -m "Commiting before pulling"'
+									sh 'git checkout master'
+									sh 'git pull origin master'
+									sh 'rm Spotfire/backward_migration/trigger_file_dir/trigger_jenkins_dev_import.txt'
+									v_csv_delete=sh (script:"ls Spotfire/backward_migration/trigger_file_dir/trigger_jenkins_dev_import.txt",returnStatus:true)
+									echo "v_csv_delete:${v_csv_delete}"
+									if ( v_csv_delete == 0){
+										sh 'rm Spotfire/backward_migration/Export/spotfire_data.csv'
+									}else {
+										echo "spotfire_data.csv is not there.This happens when you are testing"
+									}
+									sh 'pwd'
+									//sh 'ls -l /var/lib/jenkins/workspace/Jenkins_Spotfire_dev_import_clone'
+									sh 'git add -A'
+									sh 'git commit -m "Removing the trigger empty file By Dev Export "'
+									sh('git push origin master')
+						}
+					}
+					catch (err) {
+						echo "Error while deleting the Trigger file"
+						v_error_occured != "yes"
+					}
+				}
+			}
+		}
+	}
+    post {
+        always {
+			script{
+
+				if (v_error_occured != "yes") {
+					
+					finalmsg = ""
+					buildresult = "SUCCESS"
+					emailID = SSO_ID+"@ge.com"
+					//emailID = "503195859@ge.com"
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+					//from: "<nigam.patel@ge.com>",
+                    subject: "[Deployment Status: SUCCESS] ODP Spotfire Successfully Imported to Prod",
+                    to: "<${emailID}>,<Health_ODP_CICD_Dev_Team@ge.com>",
+					//to: "<${emailID}>",
+                    body: "ODP Spotfire Deployment Status for USER_STORY :${v_USER_STORY}  Build Result : ${buildresult}.<br /> ${finalmsg} ${failedStages}"
+					echo "For USER_STORY :  Build Result : ${buildresult}. ${finalmsg} ${failedStages}"
+					//snsPublish(topicArn:'arn:aws:sns:us-east-1:245792935030:us-odp-prod-devops-assembly-line-success', subject:'[Deployment Status: SUCCESS] ODP Prod Service Function Assembly Line', message:"ODP Deployment Status for v_USER_STORY :  Build Result : ${buildresult}. ${finalmsg} ${failedStages}")
+				}
+				else {
+					buildresult = "FAILURE"
+					finalmsg = "Failed Stages is/are - "
+					list_error_log = errorlog.split("\n").join("<br />")
+					failedstagesHTML = failedStages.split("\n").join("<br />")
+					emailID = SSO_ID+"@ge.com"
+					//emailID = "503195859@ge.com"
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "[Deployment Status: FAILURE] ODP Spotfire Failed to Imported to Prod",
+                    to: "<${emailID}>,<Health_ODP_CICD_Dev_Team@ge.com>",
+					//to: "<${emailID}>",
+                    body: "ODP Spotfire Deployment Status for USER_STORY :${v_USER_STORY}  <br /> Build Result : ${buildresult}.<br /> ${finalmsg} <br /> ${failedstagesHTML} <br /><br /> ${errorprefix} ${list_error_log}"
+					echo "For USER_STORY :  Build Result : ${buildresult}. ${finalmsg} ${failedStages}"
+					//snsPublish(topicArn:'arn:aws:sns:us-east-1:245792935030:us-odp-prod-devops-assembly-line-failure', subject:'[Deployment Status: FAILURE] ODP Prod Service Function Assembly Line', message:"ODP Deployment Status for USER_STORY :  Build Result : ${buildresult}.\n ${finalmsg} \n ${failedStages} \n ${errorprefix} ${errorlog}")
+				}
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				sh "python3 Spotfire/common/Spotfire_publish_cw_logs.py ${v_USER_STORY}"
+				echo 'Clean up workspace'
+				//deleteDir()
+			}
+        }
+    }
+}

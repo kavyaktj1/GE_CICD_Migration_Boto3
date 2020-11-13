@@ -1,0 +1,1 @@
+{"COMPACTION-SNS": "arn:aws:sns:us-east-1:541574621075:COMPACTION-SNS", "Subscriptions": [{"SubscriptionArn": "arn:aws:sns:us-east-1:541574621075:COMPACTION-SNS:9a630225-a840-4660-91c9-4d28a7d519b2", "Owner": "541574621075", "Protocol": "email", "Endpoint": "shikhar.sundriyal@ge.com", "TopicArn": "arn:aws:sns:us-east-1:541574621075:COMPACTION-SNS"}]}

@@ -1,0 +1,1 @@
+{"Sample-Test-Dev": "arn:aws:sns:us-east-1:541574621075:Sample-Test-Dev", "Subscriptions": [{"SubscriptionArn": "arn:aws:sns:us-east-1:541574621075:Sample-Test-Dev:4c70ee4b-7bbc-412a-b8df-199d42865b3f", "Owner": "541574621075", "Protocol": "email", "Endpoint": "Ayush.Arora@ge.com", "TopicArn": "arn:aws:sns:us-east-1:541574621075:Sample-Test-Dev"}]}

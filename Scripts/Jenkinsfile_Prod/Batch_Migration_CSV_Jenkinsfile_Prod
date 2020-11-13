@@ -1,0 +1,67 @@
+def workspace_path = ""
+
+pipeline {
+    agent any
+	parameters {
+		choice(
+			name: 'Track_Name',
+			choices: "All\nAsset\nCommercial_Intensity\nCommon\nCommon_Dimensions\nDaas_Batch_Extract_Framework\nDaas_Batch_Extract_Framework_Applications\nEcommerce\nIBMF\nIB_Intel\nIB_Upgrade\nIcenter\nJapan_Data_Mart\nJapan_Factoring\nMAPP\nNPS\nPQ_Quality\nRule_Studio\nSBOM\nServiceRequest\nSystem_Outliers\nTraceviewer\nUDI_Data_Capturing",
+			description: 'Track Name in ODP_Product repo' )
+		choice(
+			name: 'Component_Name',
+			choices: "Tables\nStored Procedures\nViews\nOne Time Scripts",
+			description: 'Comp. Name to fetch the deployment list' )
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Clone ODP_Product repository') {
+			steps {
+				script{
+					sh 'rm tempdir_odp -rf; mkdir tempdir_odp'
+					echo "Current workspace is ${env.WORKSPACE}"
+					workspace_path = env.WORKSPACE
+					dir('tempdir_odp'){
+						git branch: 'ODP_DEV',
+						credentialsId: 'git',
+						url: 'git@github.build.ge.com:DnA-ODP/ODP_Product.git'
+					}
+				}
+			}
+		}
+		stage('Create CSV Files for Batch Migration'){
+			steps {
+				script {
+					sshagent (credentials: ['git']){
+						sh """
+						cd Scripts
+						python3 manifest_creation_bulk.py "/var/lib/jenkins/workspace/ODP-PROD-Batch_Manifest_Creation" "${params.Track_Name}" "${params.Component_Name}"
+						python3 create_csv.py
+						rm -rf job_list.csv
+						"""
+						sh """
+						rm tempdir_odp -rf
+						git pull origin HEAD:master
+						git add -A :/
+						git commit -m "Creating/Updating Jobs in PROD Environment"
+						git push origin HEAD:master
+						"""
+					}
+				}
+			}
+		}
+    }    
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

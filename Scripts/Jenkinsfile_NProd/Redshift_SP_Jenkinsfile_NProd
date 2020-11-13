@@ -1,0 +1,52 @@
+def resultScript = ""
+
+pipeline {
+    agent any
+	parameters {
+        string(description: '', name:'PR_ID', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+	  buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+        stage("Creating Redshift SP Manifest file") {
+          steps {
+				script {
+					resultScript = sh(script: 'python3 Scripts/redshift_sp_manifest_NPROD.py', returnStdout: true).trim()
+				}
+             }
+	      
+		}
+		stage("Migrating Redshift SPs in PROD") {
+          steps {
+			script {
+				echo "${resultScript}"
+				if (resultScript=="SUCCESS") {
+					echo "Manifest files not empty. Invoking Glue Job"
+                  sh """
+					sleep 10
+					cd Scripts
+                    python3 migrate_redshift_sp_NPROD.py
+                    """
+				}
+				else {
+					echo "Both Pre and Normal Manifest files are empty"
+				}
+				}
+             }
+	      
+		}
+	}
+	post {
+        always
+		{
+			script{
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				sh 'python3 Scripts/CloudwatchLogs/publish_cw_logs_NPROD.py "AWS-Redshift-SP" "${PR_ID}"'
+			}
+		}
+    }
+}

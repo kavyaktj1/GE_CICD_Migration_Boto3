@@ -1,0 +1,1 @@
+[{"Id": "Id17326718128282", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:DQ_SPOTFIRE_DAILY_REFRESH", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole", "Input": "{   \"INPUT\": {     \"DQ_FRAMEWORK\": \"N\"   } }"}]

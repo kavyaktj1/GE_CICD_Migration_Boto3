@@ -1,0 +1,1 @@
+[{"Id": "Id73319939180820", "Arn": "arn:aws:states:us-east-1:541574621075:stateMachine:MAPP_RS_AUDIT_FINISH", "RoleArn": "arn:aws:iam::541574621075:role/odp-us-innovation-servicesuite-service-role", "Input": "{     \"Comment\": \"MAPP Compaction Audit Finish\" }"}]

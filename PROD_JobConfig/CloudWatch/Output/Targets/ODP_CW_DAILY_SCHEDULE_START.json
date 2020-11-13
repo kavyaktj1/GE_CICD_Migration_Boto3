@@ -1,0 +1,1 @@
+[{"Id": "Id7228094700802", "Arn": "arn:aws:lambda:us-east-1:245792935030:function:start_odp_daily_schedule", "Input": "{\"SFN_NAME\": \"ODP_DAILY_COMPACTION_SCHEDULE_START\",\"SFN_INPUT\": {\"Comments\" : \"MASTER SCHEDULE STARTING @4:30am.....\"}}"}]

@@ -1,0 +1,6 @@
+boto
+boto3
+botocore
+numpy
+pandas
+urllib3

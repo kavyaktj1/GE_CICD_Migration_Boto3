@@ -1,0 +1,1 @@
+[{"Id": "Id51549513832614", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:MAPP_ONHAND_MASTER_SCHEDULE_INTRADAY", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole", "Input": "{   \"INPUT\": { \"MAPP_ONHAND_INTRADAY\": \"N\" } }"}]

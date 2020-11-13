@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+	parameters {
+        string(description: '', name:'Workspace_Path', defaultValue: "")
+		string(description: '', name:'PR_ID', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS Lambda Run") {
+          steps {
+                  sh """
+					cd Scripts/Lambda
+                    python3 lambda_create_zip_boto3.py "${Workspace_Path}"
+					python3 lambda_prod_create_update.py "${Workspace_Path}"
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always
+		{
+			script{
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				sh 'python3 Scripts/publish_cw_logs.py "AWS-Lambda" "${PR_ID}"'
+			}
+		}
+    }
+}

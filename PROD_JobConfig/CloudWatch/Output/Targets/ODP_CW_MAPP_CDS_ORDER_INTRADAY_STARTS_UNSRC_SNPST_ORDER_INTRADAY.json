@@ -1,0 +1,1 @@
+[{"Id": "Id54010973819948", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:MAPP_UNSOURCED_SNAPSHOT_ORDER_INTRADAY", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole", "Input": "{   \"INPUT\": {     \"MAPP_UNSOURCED_SNAPSHOT_ORDER_INTRADAY\": \"N\"   } }"}]

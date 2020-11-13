@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS Lambda Run") {
+          steps {
+                  sh """
+					cd Scripts/Lambda
+                    python3 lambda_zip_code_qa.py
+                    python3 lambda_qa_create_update.py
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

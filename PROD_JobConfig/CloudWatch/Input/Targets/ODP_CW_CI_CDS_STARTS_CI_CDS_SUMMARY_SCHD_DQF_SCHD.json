@@ -1,0 +1,1 @@
+[{"Id": "Id59548359662601", "Arn": "arn:aws:lambda:us-east-1:541574621075:function:start_dq_framework_schedule"}, {"Id": "Id59688684296463", "Arn": "arn:aws:lambda:us-east-1:541574621075:function:start_ci_cds_summ_schedule"}]

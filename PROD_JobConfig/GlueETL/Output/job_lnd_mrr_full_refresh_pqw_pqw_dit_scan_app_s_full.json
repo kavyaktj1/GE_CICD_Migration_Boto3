@@ -1,0 +1,43 @@
+{
+    "Name": "job_lnd_mrr_full_refresh_pqw_pqw_dit_scan_app_s_full",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-06-16 18:44:03.606000+05:30",
+    "LastModifiedOn": "2020-06-16 18:44:03.606000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Compaction/job_lnd_mrr_full_refresh_full.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--arn_acc_no": "245792935030",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable_audit": "True",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Audit/Audit.zip",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--mrr_db": "db_compacted_mrr_pqw",
+        "--mrr_table_name": "pqw_dit_scan_app_s_full",
+        "--raw_db": "db_lnd_pqw",
+        "--raw_table_name": "pqw_dit_scan_app_s",
+        "--src_system": "pqw",
+        "--envprefix": "us-prod-odp"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 11,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "WorkerType": "Standard",
+    "NumberOfWorkers": 10,
+    "GlueVersion": "1.0"
+}

@@ -1,0 +1,42 @@
+{
+    "Name": "job_lnd_mrr_full_refresh_must_dict_full",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-05-21 16:31:42.101000+05:30",
+    "LastModifiedOn": "2020-05-27 13:14:11.628000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Compaction/job_lnd_mrr_full_refresh_full.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--arn_acc_no": "245792935030",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable_audit": "True",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Audit/Audit.zip",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_must",
+        "--mrr_table_name": "dict_full",
+        "--raw_db": "db_lnd_must",
+        "--raw_table_name": "dict",
+        "--src_system": "must",
+        "--envprefix": "us-prod-odp"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 11,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "GlueVersion": "1.0"
+}

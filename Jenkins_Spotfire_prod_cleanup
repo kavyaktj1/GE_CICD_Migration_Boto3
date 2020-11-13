@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+		
+		stage('Execute Import'){
+			steps{
+				script{
+					sshagent(credentials: ['spotfire-key']) {
+						sh 'ssh -o StrictHostKeyChecking=no -T lg820442sv@10.242.108.233 "ls -lR /data/impex_data/Migration_Automation/Imports/;rm -rf /data/impex_data/Migration_Automation/Imports/all_items/*;rm -rf /data/impex_data/Migration_Automation/Imports/datasource/*;rm -rf /data/impex_data/Migration_Automation/Imports/dxp/*;rm -rf /data/impex_data/Migration_Automation/Imports/join/*;rm -rf /data/impex_data/Migration_Automation/Imports/query/*;ls -lR /data/impex_data/Migration_Automation/Imports/"'
+					}
+				}
+			}
+		}
+	}
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

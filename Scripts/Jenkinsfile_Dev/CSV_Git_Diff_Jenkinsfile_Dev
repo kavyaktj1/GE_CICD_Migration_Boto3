@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+	parameters {
+        string(description: '', name:'PR_ID', defaultValue: "")
+		string(description: '', name:'Workspace_Path', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Clone ODP_Product repository') {
+			steps {
+				git branch: 'ODP_DEV',
+				credentialsId: 'git',
+				url: 'git@github.build.ge.com:DnA-ODP/ODP_Product.git'
+			}
+		}
+		stage('Create Git Commit Log File'){
+			steps {
+				sh """
+				cd ODP/JobConfig
+				git log --stat --name-status > git_commit_info.txt
+				"""
+			}
+		}
+		stage('Getting Commit ID from PR_ID and performing Git Diff'){
+			steps {
+				sh """
+				cd ODP/JobConfig
+				python3 git_get_commit_from_pr.py "${PR_ID}" "${Workspace_Path}"
+				"""
+			}
+		}
+    }    
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

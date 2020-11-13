@@ -1,0 +1,1 @@
+[{"Id": "Id79082397790407", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:MAPP_UNSOURCED_SNAPSHOT_INTRADAY", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole", "Input": "{   \"INPUT\": {     \"SNAPSHOT_BACKORDERS_CDS_UNSRCD_FS\": \"N\",     \"SNAPSHOT_CDC_UPDATE_HOURLY\": \"N\"   } }"}]

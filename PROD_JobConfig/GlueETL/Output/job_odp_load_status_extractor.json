@@ -1,0 +1,38 @@
+{
+    "Name": "job_odp_load_status_extractor",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-08-14 14:22:03.615000+05:30",
+    "LastModifiedOn": "2020-08-20 11:36:59.227000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "pythonshell",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Load_Status_Extractor/src/glue/job_odp_load_status_extractor.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--blue_print_bucket": "odp-us-prod-raw",
+        "--database_name": "gehc_data",
+        "--extract_output_bucket": "odp-us-prod-ent-raw",
+        "--host": "us-prod-redshift.cjn5iynjwss7.us-east-1.redshift.amazonaws.com",
+        "--iam_role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+        "--job-bookmark-option": "job-bookmark-disable",
+        "--job-language": "python",
+        "--max_threads": "16",
+        "--redshift_password_key": "db_password",
+        "--redshift_secret_key": "us-prod-odp-cicd-fsso",
+        "--redshift_username_key": "db_user_name",
+        "--region_name": "us-east-1"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 0,
+    "Timeout": 2880,
+    "MaxCapacity": 0.0625,
+    "GlueVersion": "1.0"
+}

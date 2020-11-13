@@ -1,0 +1,1 @@
+[{"Id": "Id24956898733525", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:MAPP_GLPROD_COMPACTION", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole", "Input": "{   \"INPUT\": {     \"RAW_CRAWLER\": \"N\",     \"MAPP_GLPROD_COMPACTION\": \"N\",     \"MIRROR_CRAWLER\": \"N\",     \"PUT_LAMBDA\": \"N\",     \"RS_COPY_INSERT\": \"N\"   } }"}]

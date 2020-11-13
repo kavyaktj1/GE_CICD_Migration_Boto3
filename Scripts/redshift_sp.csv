@@ -1,0 +1,3 @@
+Name,Track,Type
+hdl_services_sp.sp_srv_ib_hist_views,IB_Intel,sp
+hdl_services_sem_view.srv_asset_ib_coverage_trend_report,IB_Intel,view

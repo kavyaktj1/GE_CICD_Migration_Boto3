@@ -1,0 +1,1 @@
+[{"Id": "Id75499789320141", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:NVO_COMPACTION", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole", "Input": "{   \"INPUT\": {     \"RAW_CRAWLER\": \"N\",     \"IB_INTEL_COMPACTION_NVO\": \"N\",     \"MIRROR_CRAWLER\": \"N\",     \"PUT_LAMBDA\": \"N\",     \"RS_COPY_INSERT\": \"N\"   } }"}]

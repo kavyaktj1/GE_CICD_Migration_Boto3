@@ -1,0 +1,46 @@
+{
+    "Name": "job_lnd_mrr_incr_refresh_ov_gla_srv_cos_ast_cnvty_snpst_f",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-06-23 12:32:01.365000+05:30",
+    "LastModifiedOn": "2020-06-23 22:10:24.646000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Compaction/job_lnd_mrr_incr_refresh_op_val.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--arn_acc_no": "245792935030",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable-metrics": "",
+        "--enable_audit": "True",
+        "--envprefix": "us-prod-odp",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Audit/Audit.zip",
+        "--file_split": "64",
+        "--history_reload": "Y",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_gla",
+        "--mrr_table_name": "srv_cos_ast_cnvty_snpst_f",
+        "--raw_db": "db_lnd_gla",
+        "--raw_table_name": "srv_cos_ast_cnvty_snpst_f",
+        "--region": "us-east-1",
+        "--src_system": "gla"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 5,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "WorkerType": "G.1X",
+    "NumberOfWorkers": 5,
+    "GlueVersion": "1.0"
+}

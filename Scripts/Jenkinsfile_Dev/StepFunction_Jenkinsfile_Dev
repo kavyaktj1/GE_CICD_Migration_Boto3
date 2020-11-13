@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS StepFunction Run") {
+          steps {
+                  sh """
+					cd Scripts/StepFunction
+                    python3 sfn_qa.py
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

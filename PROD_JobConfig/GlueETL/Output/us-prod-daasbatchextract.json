@@ -1,0 +1,42 @@
+{
+    "Name": "us-prod-daasbatchextract",
+    "Role": "arn:aws:iam::245792935030:role/odp-us-prod-daasbatchextract-service-role",
+    "CreatedOn": "2020-06-26 09:42:13.201000+05:30",
+    "LastModifiedOn": "2020-06-30 20:41:14.693000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 101
+    },
+    "Command": {
+        "Name": "pythonshell",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Daas_Batch_Extract_Framework/src/glue/us-prod-daasbatchextract.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--application_name": "app_name",
+        "--database_name": "gehc_data",
+        "--dynamo_input_table": "us-prod-daasbatchextract-config",
+        "--extract_number": "extract_no",
+        "--host": "us-prod-redshift.cjn5iynjwss7.us-east-1.redshift.amazonaws.com",
+        "--job-bookmark-option": "job-bookmark-disable",
+        "--job-language": "python",
+        "--redshift_password_key": "db_password",
+        "--redshift_secret_key": "us-prod-daasbatchextract-fsso",
+        "--redshift_username_key": "db_user_name",
+        "--region_name": "us-east-1",
+        "--sns_failure_topic_name": "us-prod-daasbatchextract-failure",
+        "--sns_success_topic_name": "us-prod-daasbatchextract-success",
+        "--sns_app_failure_topic_name": "us-prod-daasbatchextract-app-failure",
+        "--sns_app_success_topic_name": "us-prod-daasbatchextract-app-success",
+        "--file_merge_job_name": "us-prod-daasbatchextract-merge-files"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 0,
+    "Timeout": 2880,
+    "MaxCapacity": 0.0625,
+    "GlueVersion": "1.0"
+}

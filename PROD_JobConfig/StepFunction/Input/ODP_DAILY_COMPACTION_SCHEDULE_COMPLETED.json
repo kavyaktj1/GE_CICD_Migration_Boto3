@@ -1,0 +1,1 @@
+{"Comment": "Daily Compaction Schedule Completed", "StartAt": "ODP_DAILY_COMPACTION_SCHEDULE_COMPLETED", "States": {"ODP_DAILY_COMPACTION_SCHEDULE_COMPLETED": {"Type": "Pass", "Result": "Hello", "End": true}}}

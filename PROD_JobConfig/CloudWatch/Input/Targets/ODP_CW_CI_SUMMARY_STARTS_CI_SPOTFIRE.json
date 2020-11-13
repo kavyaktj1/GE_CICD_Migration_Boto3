@@ -1,0 +1,1 @@
+[{"Id": "Id58516171934936", "Arn": "arn:aws:states:us-east-1:541574621075:stateMachine:CI_SPOTFIRE_DAILY_REFRESH", "RoleArn": "arn:aws:iam::541574621075:role/odp-us-innovation-servicesuite-service-role", "Input": "{   \"Comment\": \"CI SPOTFIRE starting...\" }"}]

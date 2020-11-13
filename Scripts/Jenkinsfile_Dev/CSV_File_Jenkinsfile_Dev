@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+		stage('Build CSV Files for Migration'){
+			steps{
+				script{
+					sshagent (credentials: ['git']){
+						sh 'git clone git@github.build.ge.com:DnA-ODP/ODP_Product.git'
+					}
+				}
+			}
+		}
+		
+	}
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

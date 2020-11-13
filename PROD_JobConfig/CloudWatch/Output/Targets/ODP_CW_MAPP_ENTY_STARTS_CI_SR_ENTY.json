@@ -1,0 +1,1 @@
+[{"Id": "Id170735916888003", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:CI_SR_ENTITY_SAM_SIT_MUST_BFE", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole"}]

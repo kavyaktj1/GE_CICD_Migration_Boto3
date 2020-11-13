@@ -1,0 +1,1 @@
+[{"Id": "Id31857124879671", "Arn": "arn:aws:states:us-east-1:541574621075:stateMachine:MAPP_CDS_SNAPSHOT_GLPROD_CONTINGENCY", "RoleArn": "arn:aws:iam::541574621075:role/odp-us-innovation-servicesuite-service-role", "Input": "{   \"Comment\": \"Insert your JSON here\" }"}]

@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+		stage('Deploy CICD Migration Repo changes to S3'){
+			steps{
+				script{
+					try {
+						build "ODP-NPROD-CICD_Migration_S3_Deploy"
+					}
+					catch (err) {
+						
+					}
+				}
+			}
+		}
+		stage('Deploy AWS Serverless Components into NPROD'){
+			steps{
+				script{
+					try{
+						sh """
+						cd Scripts/NPROD_Initialize
+						python3 NPROD_Initialize.py
+						"""
+					}
+					catch (err) {
+						
+					}
+				}
+			}
+		}
+		
+	}
+}

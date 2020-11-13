@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+	
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+		stage('Deploying PR for ODP Common Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_Common"
+				}
+			}
+		}
+		stage('Deploying PR for ODP Asset Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_Asset"
+				}
+			}
+		}
+		stage('Deploying PR for ODP Common Dimensions Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_CD"
+				}
+			}
+		}
+		stage('Deploying PR for ODP Commercial Intensity Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_CI"
+				}
+			}
+		}
+		stage('Deploying PR for ODP IB Intel Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_IB_Intel"
+				}
+			}
+		}
+		stage('Deploying PR for ODP IB Upgrade Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_IB_Upgrade"
+				}
+			}
+		}
+		stage('Deploying PR for ODP MAPP Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_MAPP"
+				}
+			}
+		}
+		stage('Deploying PR for ODP System Outliers Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_Outliers"
+				}
+			}
+		}
+		stage('Deploying PR for ODP ServiceRequest Track'){
+			steps {
+				script {
+					build "ODP-NPROD_Github_Merge_SR"
+				}
+			}
+		}
+    }    
+}

@@ -1,0 +1,331 @@
+def failedStages = ""
+def finalmsg = ""
+def buildresult = ""
+def emailID = ""
+def errorlog = ""
+def errorprefix = ""
+def list_error_log = ""
+def failedstagesHTML = ""
+def finalEmail = ""
+def csvjob_flag = ""
+def giterror = ""
+
+pipeline {
+    agent any
+    
+	parameters {
+        string(description: '', name:'PR_ID', defaultValue: "")
+		string(description: '', name:'SSO_ID', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+	  buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+	stage("Parallel Execution of Cloning ODP Repo/Migrating changes to S3/Creating Git log file") {
+		steps {
+			parallel (
+				"Clone ODP_Product Repo" : {
+					script{
+						try{
+							echo "Running Master Pipeline for PR - ${PR_ID}"
+							sh 'rm tempdir_odp -rf; mkdir tempdir_odp'
+							echo "Current workspace is ${env.WORKSPACE}"
+							dir('tempdir_odp'){
+								git branch: 'CDRelease1.0',
+								credentialsId: 'git',
+								url: 'git@github.build.ge.com:DnA-ODP/ODP_Product.git'
+							}
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							giterror = "True"
+							sh "exit 1"
+						}
+					}
+				},
+				"Migrating Changes to PROD S3" : {
+					script {
+						try {
+							build "ODP-PROD-S3_Copy"
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							giterror = "False"
+							sh "exit 1"
+						}
+					}
+				},
+				"Building Log file" : {
+					script {
+						try {
+							build "ODP-PROD-CSV_log_Creation"
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							giterror = "True"
+							sh "exit 1"
+						}
+					}
+				}
+			)
+		}
+	}
+	stage('Building CSV Files') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-PROD-CSV_File_Creation', parameters: [string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+		
+				}
+			}
+		}
+	}
+	stage('AWS Lambda Layer Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-PROD-Deploy_Lambda_Layer', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+				}
+			}
+		}
+	}
+	stage("Parallel Migration of AWS Serverless Components") {
+		steps {
+			parallel (
+				"AWS Glue PROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-PROD-Migrate_Glue', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Glue Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-Glue"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS DynamoDB PROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-PROD-Migrate_DynamoDB', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS DynamoDB Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-DynamoDB"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS Crawler PROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-PROD-Migrate_Crawler', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Crawler Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-Crawler"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS Glue Classifier Migration" : {
+					script {
+						try {
+							build job: 'ODP-PROD-Migrate_Classifier', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Classifier Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-Glue-Classifier"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS Lambda PROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-PROD-Migrate_Lambda', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Lambda Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-Lambda"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS StepFunction PROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-PROD-Migrate_Stepfunction', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS StepFunction Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-StepFunction"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS SNS PROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-PROD-Migrate_SNS', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS SNS Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-SNS"', returnStdout: true).trim()
+						}
+					}
+				}
+			)
+		}
+	}
+	stage('AWS CloudWatch Events Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-PROD-Migrate_CloudWatch', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+					sh 'sleep 5'
+					errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS CloudWatch Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-Cloudwatch"', returnStdout: true).trim()
+				}
+			}
+		}
+	}
+	stage('Redshift DDL PROD Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-PROD-Migrate_Redshift_DDL', parameters: [string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+					sh 'sleep 5'
+					errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Redshift DDL Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-Redshift-DDL"', returnStdout: true).trim()
+				}
+			}
+		}
+	}
+	stage('Redshift SP/View/DBScripts PROD Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-PROD-Migrate_Redshift_SP', parameters: [string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+					sh 'sleep 5'
+					errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Redshift SP/View Migration :- \n"+sh(script:'python3 Scripts/getting_error_logs.py "AWS-Redshift-SP"', returnStdout: true).trim()
+				}
+			}
+		}
+	}
+	stage('Merging Files into Git') {
+		steps {
+			script {
+				try {
+					sshagent (credentials: ['git']) {
+								sh 'rm tempdir_odp -rf'
+								sh 'git pull origin HEAD:master'
+								sh 'git add -A :/'
+								sh 'git commit -m "Adding files in PROD Environment"'
+								sh('git push origin HEAD:master')
+					}
+				}
+				catch (err) {
+				
+				}
+			}
+		}
+	}
+	stage('Cleaning up redshift order manifest files') {
+		steps {
+			script {
+				try {
+					build "ODP-PROD-Post_Migration_Cleanup"
+				}
+				catch (err) {
+		
+				}
+			}
+		}
+	}
+    }    
+    post {
+		always
+		{
+			script{
+				if (errorlog=="") {
+					errorprefix=""
+				}
+				else {
+					errorprefix="Logs for failed Stages - \n"
+				}
+				if (failedStages=="") {
+					finalmsg = ""
+					buildresult = "SUCCESS"
+					if (SSO_ID=="") {
+						SSO_ID = sh(script:'python3 Scripts/get_sso_for_pr.py ${PR_ID}', returnStdout: true).trim()
+					}
+					emailID = SSO_ID.tokenize(",")
+					for (int i=0; i<emailID.size(); ++i)
+					{
+						finalEmail = finalEmail+"<"+emailID.get(i)+"@ge.com>,"
+					}
+					finalEmail = finalEmail+"<Health_ODP_CICD_Dev_Team@ge.com>"
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "[Deployment Status: SUCCESS] ODP Prod Service Function Assembly Line",
+                    to: "${finalEmail}",
+                    body: "ODP Deployment Status for PR ID : ${PR_ID} Build Result : ${buildresult}.<br /> ${finalmsg} ${failedStages}"
+					echo "For PR ID : ${PR_ID} Build Result : ${buildresult}. ${finalmsg} ${failedStages}"
+					snsPublish(topicArn:'arn:aws:sns:us-east-1:245792935030:us-odp-prod-devops-assembly-line-success', subject:'[Deployment Status: SUCCESS] ODP Prod Service Function Assembly Line', message:"ODP Deployment Status for PR ID : ${PR_ID} Build Result : ${buildresult}. ${finalmsg} ${failedStages}")
+				}
+				else {
+					buildresult = "FAILURE"
+					finalmsg = "Failed Stages is/are - "
+					list_error_log = errorlog.split("\n").join("<br />")
+					failedstagesHTML = failedStages.split("\n").join("<br />")
+					if (giterror=="True") {
+						failedstagesHTML = failedstagesHTML+"<br /> ERROR: ODP Assembly Line was not able to connect to GitHub Repo."
+					}
+					else {
+						if (giterror=="False") {
+							failedstagesHTML = failedstagesHTML+"<br /> ERROR: ODP Assembly Line was not able to connect to PROD S3 bucket."
+						}
+					}
+					if (SSO_ID=="") {
+						SSO_ID = sh(script:'python3 Scripts/get_sso_for_pr.py ${PR_ID}', returnStdout: true).trim()
+					}
+					emailID = SSO_ID.tokenize(",")
+					for (int i=0; i<emailID.size(); ++i)
+					{
+						finalEmail = finalEmail+"<"+emailID.get(i)+"@ge.com>,"
+					}
+					finalEmail = finalEmail+"<Health_ODP_CICD_Dev_Team@ge.com>"
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "[Deployment Status: FAILURE] ODP Prod Service Function Assembly Line",
+                    to: "${finalEmail}",
+                    body: "ODP Deployment Status for PR ID : ${PR_ID} <br /> Build Result : ${buildresult}.<br /> ${finalmsg} <br /> ${failedstagesHTML} <br /><br /> ${errorprefix} ${list_error_log}"
+					echo "For PR ID : ${PR_ID} Build Result : ${buildresult}. ${finalmsg} ${failedStages}"
+					snsPublish(topicArn:'arn:aws:sns:us-east-1:245792935030:us-odp-prod-devops-assembly-line-failure', subject:'[Deployment Status: FAILURE] ODP Prod Service Function Assembly Line', message:"ODP Deployment Status for PR ID : ${PR_ID} Build Result : ${buildresult}.\n ${finalmsg} \n ${failedStages} \n ${errorprefix} ${errorlog}")
+				}
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				sh 'python3 Scripts/publish_cw_logs.py "Master" "${PR_ID}"'
+				echo 'Clean up workspace'
+				deleteDir()
+			}
+		}
+    }
+}

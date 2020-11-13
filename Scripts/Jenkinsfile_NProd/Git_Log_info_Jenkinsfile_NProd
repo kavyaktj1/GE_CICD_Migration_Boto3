@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+	parameters {
+        string(description: '', name:'Repo_Name', defaultValue: "")
+        string(description: '', name:'PR_ID', defaultValue: "-1")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Clone ODP Track repository') {
+			steps {
+				git branch: 'ODP_NPROD',
+				credentialsId: 'git',
+				url: 'git@github.build.ge.com:DnA-ODP/${Repo_Name}.git'
+			}
+		}
+		stage('Create Git Commit Log File'){
+			steps {
+				sh 'git log --stat --name-status --since=1.week > git_commit_info.txt'
+			}
+		}
+		stage('Building CSV Files'){
+			steps {
+				script {
+					build job: 'ODP-NPROD-CSV_File_Creation', parameters: [string(name: 'PR_ID', value: "${PR_ID}"),string(name: 'Workspace_Path', value: "${env.WORKSPACE}")]
+				}
+			}
+		}
+    }    
+    post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

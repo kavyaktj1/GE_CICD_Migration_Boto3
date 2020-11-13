@@ -1,0 +1,1 @@
+"{\n    \"StartAt\": \"MASTER_DAILY_SCHEDULE\",\n    \"States\": {\n        \"MASTER_DAILY_SCHEDULE\": {\n            \"Type\": \"Pass\",\n            \"Result\": \"$\",\n            \"End\": true\n        }\n    }\n}"

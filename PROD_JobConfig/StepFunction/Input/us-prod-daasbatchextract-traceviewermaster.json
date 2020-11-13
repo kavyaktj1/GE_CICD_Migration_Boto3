@@ -1,0 +1,1 @@
+{"Comment": "Master step function to call test job", "StartAt": "Daas_batch_extract_framework", "States": {"Daas_batch_extract_framework": {"Type": "Task", "Resource": "arn:aws:states:::states:startExecution.sync", "Parameters": {"StateMachineArn": "arn:aws:states:us-east-1:245792935030:stateMachine:us-prod-daasbatchextract-traceviewerextract"}, "End": true}}}

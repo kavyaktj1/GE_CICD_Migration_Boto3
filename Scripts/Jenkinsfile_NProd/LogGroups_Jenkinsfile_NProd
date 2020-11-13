@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+		stage('Creating Log Groups in Cloudwatch'){
+			steps{
+				script{
+					sh 'python3 Scripts/CloudwatchLogs/create_loggroups_NPROD.py'
+				}
+			}
+		}
+		
+	}
+}

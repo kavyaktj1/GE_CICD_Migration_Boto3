@@ -1,0 +1,4 @@
+Type,SFN,Status,Start Time,End Time,Execution Time
+CONTINGENCY,MAPP_MASTER_CONTINGENCY_SCHEDULE,SUCCEEDED,"Aug 21, 2020, 10:00","Aug 21, 2020, 10:00","0 mins, 1 secs"
+CONTINGENCY,mapp_compaction_contingency,SUCCEEDED,"Aug 21, 2020, 10:00","Aug 21, 2020, 10:19","18 mins, 57 secs"
+CONTINGENCY,MAPP_CDS_SNAPSHOT_GLPROD_CONTINGENCY,SUCCEEDED,"Aug 21, 2020, 10:19","Aug 21, 2020, 10:19","0 mins, 1 secs"

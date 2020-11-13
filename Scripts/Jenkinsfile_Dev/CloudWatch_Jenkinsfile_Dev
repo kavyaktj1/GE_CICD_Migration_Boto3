@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS CloudWatch Run") {
+          steps {
+                  sh """
+					cd Scripts/CloudWatch
+                    python3 cloudwatch_metadata_qa.py
+                    python3 cloudwatch_create_qa.py
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

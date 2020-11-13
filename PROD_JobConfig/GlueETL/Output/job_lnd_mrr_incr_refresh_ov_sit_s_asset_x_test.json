@@ -1,0 +1,40 @@
+{
+    "Name": "job_lnd_mrr_incr_refresh_ov_sit_s_asset_x_test",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-05-01 13:10:45.651000+05:30",
+    "LastModifiedOn": "2020-05-01 13:55:53.513000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Compaction/src/job_lnd_mrr_incr_refresh_op_val.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--batch_number": "1",
+        "--bucket_name": "odp-us-prod-raw",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_sit",
+        "--mrr_table_name": "s_asset_x",
+        "--raw_db": "db_lnd_sit",
+        "--raw_table_name": "s_asset_x",
+        "--src_system": "sit"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 10,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "WorkerType": "G.1X",
+    "NumberOfWorkers": 10,
+    "GlueVersion": "1.0"
+}

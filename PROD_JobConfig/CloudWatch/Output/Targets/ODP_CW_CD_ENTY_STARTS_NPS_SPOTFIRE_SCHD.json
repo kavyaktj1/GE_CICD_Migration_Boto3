@@ -1,0 +1,1 @@
+[{"Id": "Id8346931302404", "Arn": "arn:aws:lambda:us-east-1:245792935030:function:start_nps_spotfire_schedule", "Input": "{   \"TRACK_NAME\": \"CD_ENTITY\",   \"SFN_NAME\": \"NONSS_SPOTFIRE_DAILY_REFRESH\",   \"SFN_INPUT\": {     \"INPUT\": {       \"Comment\": \"Start NPS Spotfire Schedule...\"     }   } }"}]

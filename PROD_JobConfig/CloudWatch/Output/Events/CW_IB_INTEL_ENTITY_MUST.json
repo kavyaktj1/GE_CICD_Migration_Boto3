@@ -1,0 +1,1 @@
+{"Name": "CW_IB_INTEL_ENTITY_MUST", "Arn": "arn:aws:events:us-east-1:541574621075:rule/CW_IB_INTEL_ENTITY_MUST", "State": "DISABLED", "Description": "CW_IB_INTEL_ENTITY_MUST", "ScheduleExpression": "cron(0 17 ? * * *)", "EventBusName": "default"}

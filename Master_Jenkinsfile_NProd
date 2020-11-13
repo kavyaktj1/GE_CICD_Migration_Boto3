@@ -1,0 +1,303 @@
+def failedStages = ""
+def finalmsg = ""
+def buildresult = ""
+def emailID = ""
+def errorlog = ""
+def errorprefix = ""
+def list_error_log = ""
+def failedstagesHTML = ""
+def finalEmail = ""
+def csvjob_flag = ""
+
+pipeline {
+    agent any
+    
+	parameters {
+        string(description: '', name:'PR_ID', defaultValue: "")
+		string(description: '', name:'SSO_ID', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+	  buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+	stage("Parallel Execution of Cloning ODP Repo/Migrating changes to S3/Creating Git log file") {
+		steps {
+			parallel (
+				"Clone ODP_Product Repo" : {
+					script{
+						try{
+							echo "Running Master Pipeline for PR - ${PR_ID}"
+							sh 'rm tempdir_odp -rf; mkdir tempdir_odp'
+							echo "Current workspace is ${env.WORKSPACE}"
+							dir('tempdir_odp'){
+								git branch: 'ODP_NPROD',
+								credentialsId: 'git',
+								url: 'git@github.build.ge.com:DnA-ODP/ODP_Product.git'
+							}
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+						}
+					}
+				},
+				"Migrating Changes to NPROD S3" : {
+					script {
+						try {
+							build "ODP-NPROD-S3_Code_Deploy"
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+						}
+					}
+				},
+				"Building Log file" : {
+					script {
+						try {
+							build "ODP-NPROD-Log_Creation"
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+						}
+					}
+				}
+			)
+		}
+	}
+	stage('Building CSV Files') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-NPROD-CSV_File_Creation', parameters: [string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+		
+				}
+			}
+		}
+	}
+	stage('AWS Lambda Layer Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-NPROD-Deploy_Lambda_Layer', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+				}
+			}
+		}
+	}
+	stage("Parallel Migration of AWS Serverless Components") {
+		steps {
+			parallel (
+				"AWS Glue NPROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-NPROD-Deploy_Glue', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Glue Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-Glue"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS DynamoDB NPROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-NPROD-Deploy_DynamoDB', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS DynamoDB Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-DynamoDB"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS Crawler NPROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-NPROD-Deploy_Crawler', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Crawler Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-Crawler"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS Glue Classifier Migration" : {
+					script {
+						try {
+							build job: 'ODP-NPROD-Deploy_Classifier', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Classifier Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-Glue-Classifier"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS Lambda NPROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-NPROD-Deploy_Lambda', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Lambda Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-Lambda"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS StepFunction NPROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-NPROD-Deploy_StepFunction', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS StepFunction Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-StepFunction"', returnStdout: true).trim()
+						}
+					}
+				},
+				"AWS SNS NPROD Migration" : {
+					script {
+						try {
+							build job: 'ODP-NPROD-Deploy_SNS', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+						}
+						catch (err) {
+							failedStages = failedStages + env.STAGE_NAME + "\n"
+							sh 'sleep 5'
+							errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS SNS Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-SNS"', returnStdout: true).trim()
+						}
+					}
+				}
+			)
+		}
+	}
+	stage('AWS CloudWatch Events Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-NPROD-Deploy_CloudWatch', parameters: [string(name: 'Workspace_Path', value: "${env.WORKSPACE}"),string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+					sh 'sleep 5'
+					errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS CloudWatch Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-Cloudwatch"', returnStdout: true).trim()
+				}
+			}
+		}
+	}
+	stage('Redshift DDL NPROD Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-NPROD-Deploy_Redshift_DDL', parameters: [string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+					sh 'sleep 5'
+					errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Redshift DDL Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-Redshift-DDL"', returnStdout: true).trim()
+				}
+			}
+		}
+	}
+	stage('Redshift SP/View/DBScripts NPROD Migration') {
+		steps {
+			script {
+				try {
+					build job: 'ODP-NPROD-Deploy_Redshift_SP', parameters: [string(name: 'PR_ID', value: "${PR_ID}")]
+				}
+				catch (err) {
+					failedStages = failedStages + env.STAGE_NAME + "\n"
+					sh 'sleep 5'
+					errorlog = errorlog+"\n"+"****************************************************************************************************************************"+"\nAWS Redshift SP/View Migration :- \n"+sh(script:'python3 Scripts/CloudwatchLogs/getting_error_logs_NPROD.py "AWS-Redshift-SP"', returnStdout: true).trim()
+				}
+			}
+		}
+	}
+	stage('Merging Files into Git') {
+		steps {
+			script {
+				try {
+					sshagent (credentials: ['git']) {
+								sh 'rm tempdir_odp -rf'
+								sh 'git pull origin HEAD:master'
+								sh 'git add -A :/'
+								sh 'git commit -m "Adding files in NPROD Environment"'
+								sh('git push origin HEAD:master')
+					}
+				}
+				catch (err) {
+				
+				}
+			}
+		}
+	}
+    }    
+    post {
+		always
+		{
+			script{
+				if (errorlog=="") {
+					errorprefix=""
+				}
+				else {
+					errorprefix="Logs for failed Stages - \n"
+				}
+				if (failedStages=="") {
+					finalmsg = ""
+					buildresult = "SUCCESS"
+					if (SSO_ID=="") {
+						SSO_ID = sh(script:'python3 Scripts/get_sso_for_pr_NPROD.py ${PR_ID}', returnStdout: true).trim()
+					}
+					emailID = SSO_ID.tokenize(",")
+					for (int i=0; i<emailID.size(); ++i)
+					{
+						finalEmail = finalEmail+"<"+emailID.get(i)+"@ge.com>,"
+					}
+					finalEmail = finalEmail+"<Health_ODP_CICD_Dev_Team@ge.com>"
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "[Deployment Status: SUCCESS] ODP NProd Service Function Assembly Line",
+                    to: "${finalEmail}",
+                    body: "ODP NPROD Deployment Status for PR ID : ${PR_ID} Build Result : ${buildresult}.<br /> ${finalmsg} ${failedStages}"
+					echo "For PR ID : ${PR_ID} Build Result : ${buildresult}. ${finalmsg} ${failedStages}"
+					snsPublish(topicArn:'arn:aws:sns:us-east-1:341594139623:us-odp-prod-devops-assembly-line-success', subject:'[Deployment Status: SUCCESS] ODP NProd Service Function Assembly Line', message:"ODP NPROD Deployment Status for PR ID : ${PR_ID} Build Result : ${buildresult}. ${finalmsg} ${failedStages}")
+				}
+				else {
+					buildresult = "FAILURE"
+					finalmsg = "Failed Stages is/are - "
+					list_error_log = errorlog.split("\n").join("<br />")
+					failedstagesHTML = failedStages.split("\n").join("<br />")
+					if (SSO_ID=="") {
+						SSO_ID = sh(script:'python3 Scripts/get_sso_for_pr_NPROD.py ${PR_ID}', returnStdout: true).trim()
+					}
+					emailID = SSO_ID.tokenize(",")
+					for (int i=0; i<emailID.size(); ++i)
+					{
+						finalEmail = finalEmail+"<"+emailID.get(i)+"@ge.com>,"
+					}
+					finalEmail = finalEmail+"<Health_ODP_CICD_Dev_Team@ge.com>"
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "[Deployment Status: FAILURE] ODP NProd Service Function Assembly Line",
+                    to: "${finalEmail}",
+                    body: "ODP Deployment Status for PR ID : ${PR_ID} <br /> Build Result : ${buildresult}.<br /> ${finalmsg} <br /> ${failedstagesHTML} <br /><br /> ${errorprefix} ${list_error_log}"
+					echo "For PR ID : ${PR_ID} Build Result : ${buildresult}. ${finalmsg} ${failedStages}"
+					snsPublish(topicArn:'arn:aws:sns:us-east-1:341594139623:us-odp-prod-devops-assembly-line-failure', subject:'[Deployment Status: FAILURE] ODP NProd Service Function Assembly Line', message:"ODP Deployment Status for PR ID : ${PR_ID} Build Result : ${buildresult}")
+				}
+				sh 'cat ${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}/log > console_log.log'
+				sh 'python3 Scripts/CloudwatchLogs/publish_cw_logs_NPROD.py "Master" "${PR_ID}"'
+				echo 'Clean up workspace'
+				deleteDir()
+			}
+		}
+    }
+}

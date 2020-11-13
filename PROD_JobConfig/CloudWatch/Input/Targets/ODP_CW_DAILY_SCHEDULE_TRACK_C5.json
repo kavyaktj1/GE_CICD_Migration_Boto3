@@ -1,0 +1,1 @@
+[{"Id": "Id86527598434587", "Arn": "arn:aws:states:us-east-1:541574621075:stateMachine:DRM_COMPACTION", "RoleArn": "arn:aws:iam::541574621075:role/odp-us-innovation-servicesuite-service-role", "Input": "{   \"INPUT\": {     \"RAW_CRAWLER\": \"N\",     \"CD_COMPACTION_DRM\": \"N\",       \"MIRROR_CRAWLER\": \"N\",     \"PUT_LAMBDA\": \"N\",     \"RS_COPY_INSERT\": \"N\"   } }"}]

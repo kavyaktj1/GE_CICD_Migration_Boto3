@@ -1,0 +1,1 @@
+{"Name": "CW_CD_ENTITY_CAPS", "Arn": "arn:aws:events:us-east-1:541574621075:rule/CW_CD_ENTITY_CAPS", "State": "DISABLED", "Description": "CW_CD_ENTITY_CAPS", "ScheduleExpression": "cron(0 16 ? * * *)", "EventBusName": "default"}

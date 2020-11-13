@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+	parameters {
+        string(description: '', name:'Workspace_Path', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage("AWS Lambda Layers Run") {
+          steps {
+                  sh """
+					cd Scripts/Lambda
+                    python3 layer_create_dev_prod.py "${Workspace_Path}"
+                    """
+		    
+             }
+	      
+		}
+	}
+	post {
+        always {
+          node('master') {          
+            echo 'Clean up workspace'
+            deleteDir()
+          }
+        }
+    }
+}

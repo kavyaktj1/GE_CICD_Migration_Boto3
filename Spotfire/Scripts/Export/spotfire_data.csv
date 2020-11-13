@@ -1,0 +1,3 @@
+OBJECT_NAME,OBJECT_TYPE,SOURCE_LOCATION,TARGET_LOCATION
+IL_SERVICE_DELIVERY_FIELD_EXPERIENCE_ASSET_SUMM_CTR,query,/Service Data Analytics/ODP Redshift/Service Request/Information Links/,/Service Data Analytics/Service Request/Information Links/
+srv_asset_cds_summ_f_x_v,all_items,/Service Data Analytics/ODP Redshift/Service Request/Columns/,/Service Data Analytics/Service Request/Columns/

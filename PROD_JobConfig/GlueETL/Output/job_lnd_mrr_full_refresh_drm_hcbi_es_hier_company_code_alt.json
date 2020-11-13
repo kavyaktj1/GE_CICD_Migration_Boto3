@@ -1,0 +1,43 @@
+{
+    "Name": "job_lnd_mrr_full_refresh_drm_hcbi_es_hier_company_code_alt",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-04-23 12:49:08.418000+05:30",
+    "LastModifiedOn": "2020-05-19 14:42:29.544000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Compaction/job_lnd_mrr_full_refresh.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--arn_acc_no": "245792935030",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable_audit": "True",
+        "--envprefix": "us-prod-odp",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Audit/Audit.zip",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_drm",
+        "--mrr_table_name": "hcbi_es_hier_company_code_alt",
+        "--raw_db": "db_lnd_drm",
+        "--raw_table_name": "hcbi_es_hier_company_code_alt",
+        "--region": "us-east-1",
+        "--src_system": "drm"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 10,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "GlueVersion": "1.0"
+}

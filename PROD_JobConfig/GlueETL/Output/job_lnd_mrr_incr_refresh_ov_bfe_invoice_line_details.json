@@ -1,0 +1,41 @@
+{
+    "Name": "job_lnd_mrr_incr_refresh_ov_bfe_invoice_line_details",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-04-30 18:08:00.502000+05:30",
+    "LastModifiedOn": "2020-04-30 18:08:00.502000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Compaction/src/job_lnd_mrr_incr_refresh_op_val.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable-metrics": "",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_bfe",
+        "--mrr_table_name": "invoice_line_details",
+        "--raw_db": "db_lnd_bfe",
+        "--raw_table_name": "invoice_line_details",
+        "--src_system": "bfe"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 5,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "WorkerType": "G.1X",
+    "NumberOfWorkers": 5,
+    "GlueVersion": "1.0"
+}

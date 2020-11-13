@@ -1,0 +1,16 @@
+{
+	"glue_path":"../Glue_Jobs/",
+	"glue_job_list" : "../glue_new_jobs.csv",
+	"glue_header": "JobName",
+	"crawler_path" : "../CRAWLERS/",
+	"crawler_job_list" : "../crawlers_dev_json.csv",
+	"crawler_header" : "Crawlers",
+	"sns_path" : "../SNS/",
+	"cw_event_path" : "../CloudWatch/Events/",
+	"cw_target_path" : "../CloudWatch/Targets/",
+	"cw_job_list" : "../cw_dev_to_prod.csv",
+	"cw_header" : "CW",
+	"lambda_path":"../Lambda/",
+	"lambda_job_list" : "../lambda_new_jobs.csv",
+	"lambda_header": "Lambda"
+}

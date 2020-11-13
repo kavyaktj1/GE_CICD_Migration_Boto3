@@ -1,0 +1,85 @@
+def message_mail = ""
+def final_message = ""
+def count = 0
+def curr_time=""
+
+pipeline {
+    agent any
+    triggers { cron('15 11 * * *'+'\n15 15 * * *'+'\n15 18 * * *'+'\n15 3 * * *'+'\n15 7 * * *') }
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+		stage('Getting message for SFN Status'){
+			steps{
+				script{
+					sshagent (credentials: ['git']){
+						message_mail = sh(script:'python3 Scripts/SFN_Details_Fetch.py', returnStdout: true).trim()
+						message_array = message_mail.split('\n')
+						final_message = '<table style="border: 1px solid black;width:200px">'
+						for (message_line in message_array)
+						{
+							if (count==0) {
+								final_message = final_message+'<tr style="background-color:#FFFF66">'
+								message_line = message_line.trim()
+								message_words = message_line.split('\t')
+								for (word in message_words)
+								{
+									if (word.trim()!="") {
+										final_message = final_message+'<th style="border: 1px solid black;padding: 10px">'+word.trim()+'</th>'
+									}
+								}
+							}
+							else {
+								final_message = final_message+'<tr>'
+								message_line = message_line.trim()
+								message_words = message_line.split('\t')
+								for (word in message_words)
+								{
+									if (word.trim()!="") {
+										if (word.trim()=="SUCCEEDED") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#00FF00;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="RUNNING") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#00FFFF;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="FAILED") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#FF0000;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;white-space:nowrap">'+word.trim()+'</td>'
+										}
+									}
+								}
+							}
+							count = 1
+							if (message_line.trim()!="") {
+								final_message = final_message+'</tr>'
+							}
+						}
+						sh 'git pull origin HEAD:master'
+						sh 'git add -A :/'
+						sh 'git commit -m "Adding files in PROD Environment"'
+						sh('git push origin HEAD:master')
+					}
+				}
+			}
+		}
+		stage('Publishing SFN status'){
+			steps{
+				script{
+					curr_time = sh(script:'python3 Scripts/current_datetime.py', returnStdout: true).trim()
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "ODP Load/Execution Status as of ${curr_time}",
+                    to: "<Health_ODP_SS_Leads@ge.com>,<Health_ODP_Architects_Team@ge.com>,<ITSupport_JPNSVC@ge.com>,<Health_ODP_CICD_Dev_Team@ge.com>",
+                    body: "${final_message}"
+				}
+			}
+		}
+	}
+}

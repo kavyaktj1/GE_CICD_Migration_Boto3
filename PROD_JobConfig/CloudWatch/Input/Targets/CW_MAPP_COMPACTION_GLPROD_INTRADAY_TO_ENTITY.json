@@ -1,0 +1,1 @@
+[{"Id": "Id28087292498094", "Arn": "arn:aws:states:us-east-1:541574621075:stateMachine:MAPP_ENTITY_ORDER_MASTER_SCHEDULE_INTRADAY", "RoleArn": "arn:aws:iam::541574621075:role/odp-us-innovation-servicesuite-service-role", "Input": "{   \"INPUT\": {     \"MAPP_SR_ORDER_ENTITY_GLPROD_INTRADAY\": \"N\",     \"MAPP_ORDER_ENTITY_GLPROD_INTRADAY\": \"N\"   } }"}]

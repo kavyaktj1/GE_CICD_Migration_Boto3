@@ -1,0 +1,1 @@
+[{"Id": "Id2039237813717", "Arn": "arn:aws:lambda:us-east-1:245792935030:function:start_outliers_schedule", "Input": "{   \"SFN_NAME\": \"OUTLIERS_CDS_MASTER_SCHEDULE\",   \"SFN_INPUT\": {     \"INPUT\": {       \"OUTLIERS_CDS_CRM_REVENUE_CDS\": \"N\",       \"OUTLIERS_CDS_HC_REL_SR_FIELD\": \"N\",       \"OUTLIERS_CDS_HC_REL_SOL_MAINTENANCE_FS\": \"N\"     }   } }"}]

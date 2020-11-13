@@ -1,0 +1,1 @@
+{"Name": "CW_CD_ENTITY_SBOM", "Arn": "arn:aws:events:us-east-1:541574621075:rule/CW_CD_ENTITY_SBOM", "State": "DISABLED", "Description": "CW_CD_ENTITY_SBOM", "ScheduleExpression": "cron(0 16 ? * * *)", "EventBusName": "default"}

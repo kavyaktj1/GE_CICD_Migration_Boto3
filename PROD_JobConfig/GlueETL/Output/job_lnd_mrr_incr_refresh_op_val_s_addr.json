@@ -1,0 +1,38 @@
+{
+    "Name": "job_lnd_mrr_incr_refresh_op_val_s_addr",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-04-18 06:16:25.586000+05:30",
+    "LastModifiedOn": "2020-04-22 15:14:33.779000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Compaction/src/job_lnd_mrr_incr_refresh_op_val",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--batch_number": "1",
+        "--bucket_name": "odp-us-prod-raw",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_siebel_americas",
+        "--mrr_table_name": "s_addr_per_x",
+        "--raw_db": "db_lnd_siebel_americas",
+        "--raw_table_name": "s_addr_per_x",
+        "--src_system": "siebel_americas"
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 5,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "GlueVersion": "1.0",
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    }
+}

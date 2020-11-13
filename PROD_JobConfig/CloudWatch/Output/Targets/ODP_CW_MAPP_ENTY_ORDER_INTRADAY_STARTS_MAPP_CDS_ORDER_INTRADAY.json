@@ -1,0 +1,1 @@
+[{"Id": "Id40143343630213", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:MAPP_CDS_ORDER_GLPROD_INTRADAY", "RoleArn": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole", "Input": "{   \"INPUT\": {     \"MAPP_CDS_ORDER_ENTITY_INTRADAY\": \"N\"   } }"}]

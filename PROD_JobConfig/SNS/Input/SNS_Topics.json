@@ -1,0 +1,1 @@
+[{"PROD_ODP_SF_NOTIFY": "arn:aws:sns:us-east-1:245792935030:PROD_ODP_SF_NOTIFY"}, {"odp-us-prod-lambda-s3-sns-role": "arn:aws:sns:us-east-1:245792935030:odp-us-prod-lambda-s3-sns-role"}, {"odp-us-prod-monitoring-alerts": "arn:aws:sns:us-east-1:245792935030:odp-us-prod-monitoring-alerts"}]

@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    
+	parameters {
+		string(description: '', name:'Repo_Name', defaultValue: "")
+        string(description: '', name:'PR_ID', defaultValue: "")
+		string(description: '', name:'SSO_ID', defaultValue: "")
+	}
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+	  buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+	stage("Parallel Execution of Cloning ODP Repo/Migrating changes to S3/Creating Git log file") {
+		steps {
+			parallel (
+				"Clone ODP_Product Track Repo" : {
+					script{
+						try{
+							echo "Running Master Pipeline for Track - ${Repo_Name} PR - ${PR_ID} SSO IDs - ${SSO_ID}"
+							sh 'rm tempdir_odp -rf; mkdir tempdir_odp'
+							echo "Current workspace is ${env.WORKSPACE}"
+							dir('tempdir_odp'){
+								git branch: 'ODP_DEV',
+								credentialsId: 'git',
+								url: 'git@github.build.ge.com:DnA-ODP/${Repo_Name}.git'
+							}
+						}
+						catch (err) {
+						}
+					}
+				},
+				"Migrating Changes to S3" : {
+					script {
+						try {
+							build "JENKNS_ODP_DEVLPMNT"
+						}
+						catch (err) {
+						
+						}
+					}
+				},
+				"Building Log file" : {
+					script {
+						try {
+							build job: 'Git_Log_Creation', parameters: [string(name: 'Repo_Name', value: "${Repo_Name}")]
+						}
+						catch (err) {
+						
+						}
+					}
+				}
+			)
+		}
+	}
+    }    
+}

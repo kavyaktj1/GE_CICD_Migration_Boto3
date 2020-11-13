@@ -1,0 +1,44 @@
+{
+    "Name": "job_lnd_mrr_incremental_refresh_ov_servicemax_svmxc__resource_preference__c_full",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-05-18 16:10:03.103000+05:30",
+    "LastModifiedOn": "2020-05-27 13:53:11.848000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Compaction/job_lnd_mrr_incr_refresh_op_val_full.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--arn_acc_no": "245792935030",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable_audit": "True",
+        "--extra-py-files": "s3://odp-us-prod-raw/servicesuite/ODP/Common/src/glue/Audit/Audit.zip",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_servicemax",
+        "--mrr_table_name": "svmxc__resource_preference__c_full",
+        "--raw_db": "db_lnd_servicemax",
+        "--raw_table_name": "svmxc__resource_preference__c",
+        "--src_system": "servicemax",
+        "--envprefix": "us-prod-odp"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 11,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "WorkerType": "G.1X",
+    "NumberOfWorkers": 10,
+    "GlueVersion": "1.0"
+}

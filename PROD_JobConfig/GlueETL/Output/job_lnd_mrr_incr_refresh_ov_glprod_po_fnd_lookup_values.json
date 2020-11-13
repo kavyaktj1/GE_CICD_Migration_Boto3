@@ -1,0 +1,39 @@
+{
+    "Name": "job_lnd_mrr_incr_refresh_ov_glprod_po_fnd_lookup_values",
+    "Role": "arn:aws:iam::245792935030:role/ODP-US-Prod-AWSServiceRole",
+    "CreatedOn": "2020-04-30 20:07:41.064000+05:30",
+    "LastModifiedOn": "2020-05-04 18:06:37.944000+05:30",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": "s3://odp-us-prod-raw/servicesuite/ODP/Compaction/src/job_lnd_mrr_incr_refresh_op_val.py",
+        "PythonVersion": "3"
+    },
+    "DefaultArguments": {
+        "--TempDir": "s3://odp-us-prod-raw/servicesuite/tempDir/",
+        "--batch_number": "0",
+        "--bucket_name": "odp-us-prod-raw",
+        "--enable-metrics": "",
+        "--file_split": "64",
+        "--history_reload": "N",
+        "--job-bookmark-option": "job-bookmark-enable",
+        "--job-language": "python",
+        "--mrr_db": "db_compacted_mrr_glprod_po",
+        "--mrr_table_name": "fnd_lookup_values",
+        "--raw_db": "db_lnd_glprod_po",
+        "--raw_table_name": "fnd_lookup_values",
+        "--src_system": "glprod_po"
+    },
+    "Connections": {
+        "Connections": [
+            "US-ProdPeeringSubnetRedshitConnection"
+        ]
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 10,
+    "Timeout": 2880,
+    "MaxCapacity": 10,
+    "GlueVersion": "1.0"
+}

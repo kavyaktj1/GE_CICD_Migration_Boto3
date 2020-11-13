@@ -1,0 +1,1 @@
+[{"Id": "Id14739286177250", "Arn": "arn:aws:states:us-east-1:245792935030:stateMachine:us-prod-daasbatchextract-ecomm-extract", "RoleArn": "arn:aws:iam::245792935030:role/odp-us-prod-daasbatchextract-service-role", "Input": "{ \"SFN_INPUT\": {     \"Exportcontactcustomers\": \"N\", \t\"ExporteCommRecommendations\": \"N\"   } }"}]

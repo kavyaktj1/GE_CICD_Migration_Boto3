@@ -1,0 +1,168 @@
+def message_mail = ""
+def final_message = "<style>table { width: 100%; border-collapse: collapse;}td { border: 1px solid #000; }td table { margin: -2px;width: calc(100% + 4px);}</style>Latest execution status for MAPP Daily Load : </br ></br >"
+def count = 0
+def curr_time=""
+def check_var=""
+
+pipeline {
+    agent any
+	triggers { cron('00 14 * * *'+'\n00 22 * * *'+'\n00 06 * * *') }
+    options {
+      disableConcurrentBuilds()
+      timeout(time: 1, unit: 'HOURS')
+      ansiColor('xterm')
+      buildDiscarder(logRotator(numToKeepStr: '100'))
+    }
+
+    stages {
+		stage('Getting MAPP Daily Info'){
+			steps{
+				script{
+					sshagent (credentials: ['git']){
+						count = 0
+						message_mail = sh(script:'python3 Scripts/SFN_Exec_MAPP_Daily.py', returnStdout: true).trim()
+						message_array = message_mail.split('\n')
+						final_message = final_message+'<table style="border: 1px solid black;width:200px">'
+						for (message_line in message_array)
+						{
+							if (count==0) {
+								final_message = final_message+'<tr style="background-color:#FFFF66">'
+								message_line = message_line.trim()
+								message_words = message_line.split('\t')
+								for (word in message_words)
+								{
+									if (word.trim()!="") {
+										final_message = final_message+'<th style="border: 1px solid black;padding: 10px">'+word.trim()+'</th>'
+									}
+								}
+							}
+							else {
+								final_message = final_message+'<tr>'
+								message_line = message_line.trim()
+								message_words = message_line.split('\t')
+								for (word in message_words)
+								{
+									if (word.trim()!="") {
+										if (word.trim()=="SUCCEEDED") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#00FF00;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="RUNNING") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#00FFFF;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="FAILED") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#FF0000;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="DAILY") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#FFA833;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;white-space:nowrap">'+word.trim()+'</td>'
+										}
+									}
+								}
+							}
+							count = 1
+							if (message_line.trim()!="") {
+								final_message = final_message+'</tr>'
+							}
+						}
+						final_message = final_message+'</table><br /><br />Latest execution status for MAPP CONTINGENCY Load : <br /><br />'
+					}
+				}
+			}
+		}
+		stage('Getting MAPP Contingency Info'){
+			steps{
+				script{
+					sshagent (credentials: ['git']){
+						count = 0
+						message_mail = sh(script:'python3 Scripts/SFN_Exec_MAPP_Contingency.py', returnStdout: true).trim()
+						message_array = message_mail.split('\n')
+						final_message = final_message+'<table style="border: 1px solid black;width:200px">'
+						for (message_line in message_array)
+						{
+							if (count==0) {
+								final_message = final_message+'<tr style="background-color:#FFFF66">'
+								message_line = message_line.trim()
+								message_words = message_line.split('\t')
+								for (word in message_words)
+								{
+									if (word.trim()!="") {
+										final_message = final_message+'<th style="border: 1px solid black;padding: 10px">'+word.trim()+'</th>'
+									}
+								}
+							}
+							else {
+								final_message = final_message+'<tr>'
+								message_line = message_line.trim()
+								message_words = message_line.split('\t')
+								for (word in message_words)
+								{
+									if (word.trim()!="") {
+										if (word.trim()=="SUCCEEDED") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#00FF00;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="RUNNING") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#00FFFF;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="FAILED") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#FF0000;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else if (word.trim()=="CONTINGENCY") {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;background-color:#0000FF;white-space:nowrap">'+word.trim()+'</td>'
+										}
+										else {
+											final_message = final_message+'<td style="border: 1px solid black;padding: 10px;white-space:nowrap">'+word.trim()+'</td>'
+										}
+									}
+								}
+							}
+							count = 1
+							if (message_line.trim()!="") {
+								final_message = final_message+'</tr>'
+							}
+						}
+						final_message = final_message+'</table><br /><br />Latest execution status for MAPP ORDER Load : <br /><br />'
+					}
+				}
+			}
+		}
+		stage('Getting MAPP ORDER Info'){
+			steps{
+				script{
+					sshagent (credentials: ['git']){
+						message_mail = sh(script:'python3 Scripts/SFN_Order_Multiple.py', returnStdout: true).trim()
+						final_message = final_message+message_mail
+						final_message = final_message+'Latest execution status for MAPP ONHAND Load : <br /><br />'
+					}
+				}
+			}
+		}
+		stage('Getting MAPP ONHAND Info'){
+			steps{
+				script{
+					sshagent (credentials: ['git']){
+						message_mail = sh(script:'python3 Scripts/SFN_Onhand_Multiple.py', returnStdout: true).trim()
+						final_message = final_message+message_mail
+						sh 'git pull origin HEAD:master'
+						sh 'git add -A :/'
+						sh 'git commit -m "Adding files in PROD Environment"'
+						sh('git push origin HEAD:master')
+					}
+				}
+			}
+		}
+		stage('Publishing SFN status'){
+			steps{
+				script{
+					curr_time = sh(script:'python3 Scripts/current_datetime.py', returnStdout: true).trim()
+					emailext mimeType: 'text/html',
+                    from: "<Health_ODP_CICD_Dev_Team@ge.com>",
+                    subject: "ODP MAPP Track Load/Execution Status as of ${curr_time}",
+                    to: "<mappdevelopmentteam@ge.com>,<Health_ODP_SS_Leads@ge.com>,<odporchestration@ge.com>,<dna_service_suite_track_owners@ge.com>,<naganandini.Velvadapu@ge.com>,<Health_ODP_CICD_Dev_Team@ge.com>",
+                    body: "${final_message}"
+				}
+			}
+		}
+	}
+}

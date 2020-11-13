@@ -1,0 +1,1 @@
+{"Name": "CW_CONNECTIVITY_COMPACTION", "Arn": "arn:aws:events:us-east-1:541574621075:rule/CW_CONNECTIVITY_COMPACTION", "State": "DISABLED", "Description": "CW_CONNECTIVITY_COMPACTION", "ScheduleExpression": "cron(00 15 ? * * *)", "EventBusName": "default"}

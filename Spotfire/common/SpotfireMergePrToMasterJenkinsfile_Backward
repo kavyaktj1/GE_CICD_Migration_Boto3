@@ -1,0 +1,258 @@
+def pr_status=''
+def v_PR=""
+def v_Mail1=''
+def copy_status=''
+def v_move=""
+def v_error_occured =""
+def moveToArchiveDir() {
+ 		    //Check if the directory is there or not
+                    sh ' rm -rf tempdir_odp_spotfire;mkdir tempdir_odp_spotfire'
+						echo "Current workspace is ${env.WORKSPACE}"
+						dir('tempdir_odp_spotfire'){
+							git branch: 'master',
+							credentialsId: 'git',
+							url: 'git@github.build.ge.com:DnA-ODP/ODP_Spotfire.git'
+						}
+
+                    //res = sh(script: "test -d tempdir_odp_spotfire/archive_dir && echo '0' || echo '1' ", returnStdout: true).trim()
+                    v_arch_dir_present=sh (script:"ls tempdir_odp_spotfire/archive_dir",returnStatus:true)
+                    echo "${v_arch_dir_present}"
+                    if(v_arch_dir_present==0){
+                        echo 'The archive directory is present'
+                        v_timestamp=sh (script:"date +%Y_%m_%d_%H_%M",returnStdout: true).trim()
+                        v_new_filename="spotfire_data_${v_timestamp}.csv"
+                        v_mv_status=sh (script:"cp tempdir_odp_spotfire/export/spotfire_data.csv tempdir_odp_spotfire/archive_dir/${v_new_filename}",returnStatus:true)
+                        if (v_mv_status== 0){
+                            echo "Moved successfully the spotfire_data.csv to the archive directory"
+                        }else {
+                            error "Failed to Move the file to Archive Directory.Hence,Exiting."
+                            
+                        }
+                    } else {
+                        echo 'Directory is not created.So,going to create it'
+                        //sh "rm -rf /var/lib/jenkins/workspace/Jenkins_Spotfire_MergeAutomatically/archive_dir"
+                        sh 'mkdir tempdir_odp_spotfire/archive_dir'
+                        v_arch_dir_present = sh (script:"ls tempdir_odp_spotfire/archive_dir",returnStatus:true)
+                        if (v_arch_dir_present ==0 ){
+                         echo "The Archive directory is created"
+                         v_timestamp=sh (script:"date +%Y_%m_%d_%H_%M",returnStdout: true).trim()
+                         //v_new_filename="spotfire_data_${v_PR}_${v_timestamp}.csv"
+                         v_new_filename="spotfire_data_${v_timestamp}.csv"
+                         
+                         v_mv_status=sh (script:"cp tempdir_odp_spotfire/export/spotfire_data.csv tempdir_odp_spotfire/archive_dir/${v_new_filename}",returnStatus:true)
+                             if (v_mv_status== 0){
+                                echo "Moved successfully the spotfire_data.csv to the archive directory"
+                            }else {
+                                error "Failed to Move the file to Archive Directory.Hence,Exiting."
+                                
+                            }
+                        }
+                    }
+                    echo "The pwd is:"
+                    sh """ 
+                    cd tempdir_odp_spotfire
+                    git branch
+                    git checkout master
+                    #sh "cd tempdir_odp_spotfire"
+                    git add .
+                    git commit -m 'adding the file to the archive dir'
+                    echo "going to push to the archive dir in ODP_Spotfire"
+                    git push origin master
+                    """
+}
+
+def deleteSpotfireDataCsv() {
+                    sh ' rm -rf tempdir_odp_spotfire;mkdir tempdir_odp_spotfire'
+						echo "Current workspace is ${env.WORKSPACE}"
+						dir('tempdir_odp_spotfire'){
+							git branch: 'master',
+							credentialsId: 'git',
+							url: 'git@github.build.ge.com:DnA-ODP/ODP_Spotfire.git'
+						}
+                        
+                    v_delete_status=sh(script:"rm tempdir_odp_spotfire/export/spotfire_data.csv",returnStatus:true)
+                    if (v_delete_status == 0 ) {
+                        echo "spotfire_data.csv is deleted.Going to push the repo"
+                    sh """ 
+                    cd tempdir_odp_spotfire
+                    git branch
+                    git checkout master
+                    #sh "cd tempdir_odp_spotfire"
+                    git add -A
+                    git commit -m 'Deleting the spotfire_data.csv'
+                    echo "going to push the repo after deleting spotfire_data in ODP_Spotfire"
+                    git push origin master
+                    """  
+                }else {
+                    echo "Error while deleting the spotfire_data.csv"
+                    v_error_occured='yes'
+                }
+                
+}
+pipeline {
+
+    agent any
+    //triggers { cron('*/5 * * * *') }
+    environment {
+	v_STATUS=''
+	v_Revert_Commit=''
+	}
+ 	
+	parameters {
+        string(description: '', name:'USER_STORY', defaultValue: "")
+		string(description: '', name:'SSO_ID', defaultValue: "")
+	}													  
+    stages {
+   /*
+    
+    stage('Login into Github and Merging PR from Feature') {
+		steps {
+			
+			
+
+				sshagent (credentials: ['git']) {
+							script {
+                                try {
+							    
+								//pr_status=sh(script:'v_pr_and_status=`sh Spotfire/Scripts/SpotfireCallFeatureToMaster.sh`;echo $v_pr_and_status',returnStdout:true).trim()
+								pr_sso=sh(script:'v_pr_and_sso=`python3 Spotfire/common/SpotfireMergeFromFeatureToMaster_Backward.py`;echo $v_pr_and_sso',returnStdout:true).trim()
+								//sh 'python3 Spotfire/Scripts/SpotfireMergeFromFeatureToMaster.py'
+								echo "pr_sso: ${pr_sso}"
+								def (PR_ID_MERGE,EMAIL1,MIGRATION) = pr_sso.tokenize( '|' )
+								//EMAIL1=503195859
+								echo "PR_ID : $PR_ID_MERGE"
+								echo "EMAIL1 : $EMAIL1"
+								v_PR = sh(script:"echo ${PR_ID_MERGE}", returnStdout:true).trim()
+								v_Mail1 = sh(script:"echo ${EMAIL1}", returnStdout:true).trim()
+								v_migration=sh(script:"echo ${MIGRATION}", returnStdout:true).trim()
+								echo "${v_PR}"
+							    echo "${v_Mail1}"
+								echo "v_migration: $v_migration"
+								if( v_migration != 'backward' ) {
+									echo ("Aborting the Migration as this is not for Backward")
+									error
+								}
+                                }catch(err) {
+                                    echo "There was error while merging Or the csv is not for Backward"
+                                    v_error_occured='yes'
+                                }
+							
+							}
+                }
+		}
+	}
+   */
+		stage ('Deleting the spotfire_csv file from CICD_Migration_Boto3 repo at the begining') {
+		steps {
+			sshagent (credentials: ['git']) {
+					script {
+							sh 'git checkout master'
+							sh 'git pull origin master'
+							echo "USER_STORY:${USER_STORY}"
+							echo "SSO_ID:${SSO_ID}"
+							echo "Checking if the spotfire_csv file is there in the CICD_Migration_Boto3 repo"
+							v_csv_delete=sh (script:"ls Spotfire/backward_migration/Export/spotfire_data.csv",returnStatus:true)
+							echo "v_csv_delete:${v_csv_delete}"
+							
+							if ( v_csv_delete == 0){
+								echo "spotfire_data.csv file is there.So,deleting it"
+								sh 'rm Spotfire/backward_migration/Export/spotfire_data.csv'
+								sh 'rm -rf tempdir_odp_spotfire'
+								sh 'git add -A'
+								sh 'git commit -m "Deleting the spotfire_data.csv file,before doing the Prod Export"'
+								sh('git push origin master')
+							}else {
+								echo "spotfire_data.csv file is not there in CICD_Migration_Boto3 repo.So,going to the next stage "
+							}
+
+					}
+			}
+		}	
+	}
+	
+	
+	stage ('Merge Spotfire feature to Master') {
+		
+		steps {
+			script { 
+			if (v_PR != "null"  && v_error_occured !="yes"){
+				//build 'ODP_Spotfire_CSV_Merge_Backward'
+				build job: 'ODP_Spotfire_CSV_Merge_Backward',parameters: [[$class: 'StringParameterValue',name: 'USER_STORY', value: "${USER_STORY}"]]																														 
+				}
+			}
+		}
+	
+	}
+	
+		 stage ("Copy spotfire_data.csv from ODP_Spotfire to CICD_Migration_Boto3"){
+                          when {
+                    expression { v_error_occured !="yes"  && v_PR != "null" }
+                }
+                steps {
+     			sshagent (credentials: ['git']) {
+     					script{
+                           try {
+							sh ' pwd'
+							//sh ' rm -rf tempdir_odp_spotfire;mkdir tempdir_odp_spotfire'
+							//echo "Current workspace is ${env.WORKSPACE}"
+							//dir('tempdir_odp_spotfire'){
+								//git branch: 'spotfire_master',
+								//credentialsId: 'git',
+								//url: 'git@github.build.ge.com:DnA-ODP/ODP_Spotfire.git'
+							//}
+
+                            moveToArchiveDir()
+							sh 'pwd'
+							sh 'git add -A'
+							sh 'git commit -m "Commiting before checkingout to master"'
+							sh 'git checkout master'
+							sh 'git pull origin master'
+							copy_status=sh(script:'cp tempdir_odp_spotfire/export/spotfire_data.csv Spotfire/backward_migration/Export/spotfire_data.csv;echo $?',returnStatus:true)
+                            echo "copy_status=${copy_status}"
+                                if (copy_status== 0){
+                                    echo "Copied successfully"
+                                }else {
+                                    error "Failed to Copy.So,Exiting."
+                                }
+							//calling function to move the csv file to the archive dir
+                            //moveToArchiveDir()
+							sh 'rm -rf tempdir_odp_spotfire '
+							sh 'git add -A'
+							sh 'git commit -m "Adding the spotfire_data.csv"'
+							sh 'git push origin master'
+                            echo "Delete the spotfite_data.csv from the ODP_Spotfire repo"
+                            deleteSpotfireDataCsv()
+                            }
+                            catch (err) {
+                                    echo "Error in the copy of spotfire_data.csv"
+                                    v_error_occured='yes'
+                                }
+						}
+                        
+                    }
+				}		
+			}
+    
+    	stage('Trigger Prod Export') {
+	  			when { 			
+                    //expression { v_error_occured != "yes" && v_PR != "null" && v_migration == "backward" } 
+					expression { v_error_occured != "yes" && USER_STORY != "null" }												 
+                }
+		steps {
+			script {
+				try {
+                    echo "Going to trigger the Prod Export Job"
+                    echo "v_PR:${v_PR}"
+                    echo "v_Mail1:${v_Mail1}"
+                    build job: 'ODP_Spotfire_PROD_Export',parameters: [[$class: 'StringParameterValue',name: 'USER_STORY', value: "${USER_STORY}"],[$class: 'StringParameterValue',name: 'SSO_ID', value: "${SSO_ID}"]]
+				}
+				catch (err) {
+					echo "The Trigger ODP_Spotfire_PROD_export failed"
+				}
+                
+			}
+		}
+	}
+    
+    }
+}
